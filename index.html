@@ -267,6 +267,22 @@ body{font-family:var(--font-main);background:var(--bg-base);color:var(--text-pri
 .confidence-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold-bright));border-radius:3px;transition:width 2s cubic-bezier(.16,1,.3,1) 1s}
 @media(max-width:700px){.trust-grid{grid-template-columns:repeat(2,1fr)}}
 
+/* SECTION NAVIGATOR — TABLE OF CONTENTS BAR */
+.section-toc{max-width:980px;margin:0 auto;padding:20px 40px 0;position:relative;z-index:10}
+.toc-bar{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:16px 24px;display:flex;align-items:center;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.toc-bar::-webkit-scrollbar{height:0}
+.toc-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);white-space:nowrap;margin-right:8px;flex-shrink:0}
+.toc-divider{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 4px}
+.toc-item{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all .3s;white-space:nowrap;text-decoration:none;flex-shrink:0;border:1px solid transparent}
+.toc-item:hover{color:var(--text-secondary);background:rgba(255,255,255,.03);border-color:var(--border)}
+.toc-item .toc-num{font-family:var(--font-mono);font-size:10px;color:var(--gold);opacity:.6}
+.toc-item:hover .toc-num{opacity:1}
+@media(max-width:600px){.section-toc{padding:12px 16px 0}.toc-bar{padding:12px 16px}}
+
+/* Tableau CTA */
+.closing-cta-tableau{display:inline-flex;align-items:center;gap:10px;background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-border);border-radius:14px;padding:17px 32px;font-family:var(--font-main);font-size:15px;font-weight:600;cursor:pointer;transition:all .3s;text-decoration:none}
+.closing-cta-tableau:hover{background:rgba(79,209,197,.15);transform:translateY(-2px);box-shadow:0 8px 24px rgba(79,209,197,.12)}
+
 /* CLOSING */
 #closing{text-align:center}
 .closing-buttons{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:40px;flex-wrap:wrap;opacity:0;transform:translateY(12px);transition:all .8s cubic-bezier(.16,1,.3,1) .5s}
@@ -333,6 +349,142 @@ body{font-family:var(--font-main);background:var(--bg-base);color:var(--text-pri
 .reveal-footer{border-top:1px solid var(--border);padding:40px;text-align:center;font-size:12px;color:var(--text-muted);line-height:1.6}
 .reveal-footer strong{color:var(--text-secondary);font-weight:600}
 @media(max-width:600px){.reveal-section{padding:80px 24px}.citations-section{padding:40px 24px}}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* ENHANCEMENT LAYER — Backend Integration Components          */
+/* ═══════════════════════════════════════════════════════════ */
+
+/* LIVE SYSTEM EXECUTION PANEL */
+.system-execution{margin-top:56px;opacity:0;transform:translateY(24px);transition:all 1s cubic-bezier(.16,1,.3,1) .5s}
+.in-view .system-execution{opacity:1;transform:translateY(0)}
+.exec-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;overflow:hidden;position:relative}
+.exec-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--teal),var(--gold));opacity:.6}
+.exec-header{display:flex;align-items:center;justify-content:space-between;padding:24px 28px;border-bottom:1px solid var(--border)}
+.exec-header-left{display:flex;align-items:center;gap:12px}
+.exec-status-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);transition:all .4s}
+@keyframes statusPulse{0%,100%{opacity:.4;box-shadow:0 0 0 0 rgba(46,204,135,0)}50%{opacity:1;box-shadow:0 0 0 6px rgba(46,204,135,.15)}}
+.exec-status-dot.running{background:var(--gold);animation:statusPulse 1s ease-in-out infinite}
+.exec-status-dot.complete{background:var(--green);animation:statusPulse 2s ease-in-out infinite}
+.exec-status-dot.error{background:var(--red);animation:none}
+.exec-header-title{font-size:13px;font-weight:600;color:var(--text-primary);letter-spacing:.04em}
+.exec-header-sub{font-size:10px;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:.06em}
+.exec-btn{display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:#0d1117;border:none;border-radius:10px;padding:10px 22px;font-family:var(--font-main);font-size:13px;font-weight:700;cursor:pointer;transition:all .3s;letter-spacing:.02em}
+.exec-btn:hover{background:var(--gold-bright);transform:translateY(-1px);box-shadow:0 6px 20px rgba(224,176,82,.3)}
+.exec-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.exec-btn-reset{background:transparent;color:var(--text-muted);border:1px solid var(--border);padding:10px 18px;border-radius:10px;font-family:var(--font-main);font-size:12px;font-weight:600;cursor:pointer;transition:all .3s;margin-left:8px}
+.exec-btn-reset:hover{color:var(--text-secondary);border-color:var(--text-muted)}
+.exec-body{display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+@media(max-width:900px){.exec-body{grid-template-columns:1fr}}
+
+/* LEFT: NavigationContext Viewer */
+.ctx-panel{padding:24px 28px;border-right:1px solid var(--border);overflow-y:auto;max-height:480px}
+.ctx-panel::-webkit-scrollbar{width:3px}.ctx-panel::-webkit-scrollbar-thumb{background:var(--text-muted);border-radius:2px}
+@media(max-width:900px){.ctx-panel{border-right:none;border-bottom:1px solid var(--border);max-height:320px}}
+.ctx-title{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.ctx-title .ctx-dot{width:5px;height:5px;border-radius:50%;background:var(--gold)}
+.ctx-field{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.02)}
+.ctx-field:last-child{border-bottom:none}
+.ctx-field-key{font-family:var(--font-mono);font-size:10.5px;color:var(--teal);letter-spacing:.04em;margin-bottom:3px}
+.ctx-field-val{font-size:12.5px;color:var(--cloud-blue);line-height:1.5;word-break:break-word}
+.ctx-field-val.empty{color:var(--text-muted);font-style:italic}
+.ctx-field-val code{font-family:var(--font-mono);font-size:11px;background:rgba(79,209,197,.06);border:1px solid var(--teal-border);border-radius:4px;padding:1px 5px;color:var(--teal)}
+.ctx-field-val .risk-green{color:var(--green);font-weight:600}
+.ctx-field-val .risk-yellow{color:var(--amber);font-weight:600}
+.ctx-field-val .risk-red{color:var(--red);font-weight:600}
+
+/* RIGHT: Pipeline Progress + Results */
+.results-panel{padding:24px 28px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;max-height:480px}
+.results-panel::-webkit-scrollbar{width:3px}.results-panel::-webkit-scrollbar-thumb{background:var(--text-muted);border-radius:2px}
+.pipeline-progress{display:flex;flex-direction:column;gap:0}
+.progress-stage{display:flex;align-items:center;gap:12px;padding:7px 0;position:relative}
+.progress-stage::before{content:'';position:absolute;left:9px;top:24px;width:1px;height:calc(100% - 10px);background:rgba(255,255,255,.04)}
+.progress-stage:last-child::before{display:none}
+.progress-node{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--text-muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;transition:all .5s;background:var(--bg-base);z-index:1}
+.progress-node.completed{border-color:var(--green);background:var(--green-dim);color:var(--green)}
+.progress-node.active{border-color:var(--gold);background:var(--gold-dim);color:var(--gold);box-shadow:0 0 0 4px rgba(224,176,82,.1)}
+.progress-node.error-node{border-color:var(--red);background:var(--red-dim);color:var(--red)}
+.progress-info{flex:1;min-width:0}
+.progress-name{font-size:12px;font-weight:500;color:var(--text-muted);transition:color .4s}
+.progress-stage.stage-complete .progress-name{color:var(--text-secondary)}
+.progress-stage.stage-active .progress-name{color:var(--text-primary);font-weight:600}
+.progress-time{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);flex-shrink:0}
+.progress-stage.stage-complete .progress-time{color:var(--green)}
+
+/* OPTIMIZATION RESULTS CARD */
+.opt-results{background:rgba(224,176,82,.03);border:1px solid var(--border-gold);border-radius:14px;padding:20px;opacity:0;transform:translateY(8px);transition:all .6s cubic-bezier(.16,1,.3,1)}
+.opt-results.visible{opacity:1;transform:translateY(0)}
+.opt-title{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.opt-title .opt-icon{width:18px;height:18px;border-radius:5px;background:var(--gold-dim);border:1px solid var(--border-gold);display:flex;align-items:center;justify-content:center;font-size:10px}
+.opt-pathways{display:flex;flex-direction:column;gap:8px}
+.opt-path{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-base);transition:all .3s}
+.opt-path.recommended{border-color:var(--green);background:rgba(46,204,135,.04)}
+.opt-path-rank{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);width:16px;flex-shrink:0}
+.opt-path.recommended .opt-path-rank{color:var(--green)}
+.opt-path-name{font-size:12px;color:var(--text-primary);flex:1;font-weight:500}
+.opt-path-score{font-family:var(--font-mono);font-size:11px;color:var(--gold);min-width:44px;text-align:right}
+.opt-path.recommended .opt-path-score{color:var(--green)}
+.opt-path-bar{width:60px;height:4px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden;flex-shrink:0}
+.opt-path-bar-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.16,1,.3,1)}
+.opt-objective{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.opt-objective-label{font-size:11px;color:var(--text-muted)}
+.opt-objective-val{font-family:var(--font-mono);font-size:13px;color:var(--gold);font-weight:600}
+
+/* FHIR OUTPUT VIEWER */
+.fhir-viewer{background:var(--bg-card);border:1px solid var(--teal-border);border-radius:16px;overflow:hidden;opacity:0;transform:translateY(8px);transition:all .6s cubic-bezier(.16,1,.3,1)}
+.fhir-viewer.visible{opacity:1;transform:translateY(0)}
+.fhir-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:rgba(79,209,197,.04);border-bottom:1px solid var(--teal-border)}
+.fhir-header-left{display:flex;align-items:center;gap:8px}
+.fhir-badge{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);background:var(--teal-dim);border:1px solid var(--teal-border);border-radius:6px;padding:3px 8px}
+.fhir-header-title{font-size:12px;font-weight:600;color:var(--text-primary)}
+.fhir-body{padding:16px 20px;max-height:220px;overflow-y:auto}
+.fhir-body::-webkit-scrollbar{width:3px}.fhir-body::-webkit-scrollbar-thumb{background:var(--text-muted);border-radius:2px}
+.fhir-json{font-family:var(--font-mono);font-size:11px;line-height:1.7;color:var(--cloud-blue);white-space:pre-wrap;word-break:break-all}
+.fhir-json .fk{color:var(--teal)}.fhir-json .fv{color:var(--gold)}.fhir-json .fs{color:var(--cloud-blue)}.fhir-json .fb{color:var(--green)}
+.fhir-footer{padding:10px 20px;border-top:1px solid var(--teal-border);display:flex;align-items:center;justify-content:space-between}
+.fhir-footer-text{font-size:10px;color:var(--text-muted);font-family:var(--font-mono)}
+.fhir-copy-btn{font-size:10px;color:var(--teal);background:var(--teal-dim);border:1px solid var(--teal-border);border-radius:6px;padding:4px 10px;cursor:pointer;font-family:var(--font-main);font-weight:600;transition:all .3s}
+.fhir-copy-btn:hover{background:rgba(79,209,197,.15)}
+
+/* CANCELLATION REROUTING NOTIFICATION */
+.cancel-notification{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(120px);z-index:300;background:var(--bg-card);border:1px solid var(--amber);border-radius:16px;padding:20px 28px;box-shadow:0 16px 48px rgba(0,0,0,.5),0 0 0 1px rgba(240,165,0,.1);max-width:520px;width:90%;transition:transform .6s cubic-bezier(.16,1,.3,1),opacity .4s;opacity:0;pointer-events:none}
+.cancel-notification.visible{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
+.cancel-notification::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--amber),transparent);border-radius:16px 16px 0 0}
+.cancel-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.cancel-icon{width:28px;height:28px;border-radius:8px;background:var(--amber-dim);border:1px solid rgba(240,165,0,.2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.cancel-title{font-size:14px;font-weight:600;color:var(--amber)}
+.cancel-body{font-size:13px;color:var(--cloud-blue);line-height:1.6}
+.cancel-body strong{color:var(--text-primary)}
+.cancel-actions{display:flex;gap:8px;margin-top:14px}
+.cancel-accept{background:var(--amber);color:#0d1117;border:none;border-radius:8px;padding:8px 18px;font-family:var(--font-main);font-size:12px;font-weight:700;cursor:pointer;transition:all .3s}
+.cancel-accept:hover{background:var(--gold-bright)}
+.cancel-dismiss{background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-family:var(--font-main);font-size:12px;font-weight:500;cursor:pointer;transition:all .3s}
+.cancel-dismiss:hover{color:var(--text-secondary);border-color:var(--text-muted)}
+
+/* TELEMETRY STATUS BAR */
+.telemetry-bar{position:fixed;bottom:0;left:0;right:0;z-index:150;background:rgba(9,13,20,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:8px 32px;display:flex;align-items:center;justify-content:space-between;font-size:10px;transform:translateY(100%);transition:transform .5s cubic-bezier(.16,1,.3,1);gap:16px}
+.telemetry-bar.visible{transform:translateY(0)}
+.telem-left{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.telem-item{display:flex;align-items:center;gap:6px;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:.04em}
+.telem-item .telem-dot{width:5px;height:5px;border-radius:50%}
+.telem-item .telem-dot.green{background:var(--green)}.telem-item .telem-dot.gold{background:var(--gold)}.telem-item .telem-dot.teal{background:var(--teal)}
+.telem-right{display:flex;align-items:center;gap:12px;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:.04em}
+.telem-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:4px;padding:2px 8px;font-family:var(--font-mono);font-size:9px;cursor:pointer;transition:all .3s}
+.telem-toggle:hover{color:var(--text-secondary);border-color:var(--text-muted)}
+@media(max-width:700px){.telemetry-bar{padding:6px 16px;gap:8px}.telem-item{font-size:9px}}
+
+/* SYSTEM DEMO INPUT */
+.demo-input-area{margin-top:24px;opacity:0;transform:translateY(16px);transition:all 1s cubic-bezier(.16,1,.3,1) .7s}
+.in-view .demo-input-area{opacity:1;transform:translateY(0)}
+.demo-input-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px;position:relative}
+.demo-input-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.4}
+.demo-input-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.demo-input-label .dil-dot{width:5px;height:5px;border-radius:50%;background:var(--gold)}
+.demo-textarea{width:100%;background:var(--bg-base);border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-family:var(--font-main);font-size:14px;color:var(--text-primary);line-height:1.6;resize:vertical;min-height:80px;max-height:160px;outline:none;transition:border-color .3s}
+.demo-textarea::placeholder{color:var(--text-muted)}
+.demo-textarea:focus{border-color:var(--border-gold)}
+.demo-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.demo-preset{font-size:11px;color:var(--cloud-blue);background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;transition:all .3s;font-family:var(--font-main)}
+.demo-preset:hover{border-color:var(--teal-border);color:var(--teal);background:var(--teal-dim)}
 </style>
 </head>
 <body>
@@ -348,6 +500,7 @@ body{font-family:var(--font-main);background:var(--bg-base);color:var(--text-pri
   <div class="nav-dot" data-label="Ecosystem" data-target="ecosystem"></div>
   <div class="nav-dot" data-label="Impact" data-target="impact"></div>
   <div class="nav-dot" data-label="Trust" data-target="trust"></div>
+  <div class="nav-dot" data-label="Live System" data-target="liveSystem"></div>
 </nav>
 
 <!-- OPENING -->
@@ -356,10 +509,27 @@ body{font-family:var(--font-main);background:var(--bg-base);color:var(--text-pri
   <div class="opening-content">
     <div class="opening-badge"><span style="font-size:12px">⬡</span> System Architecture Reveal</div>
     <h1 class="opening-title">Every system has<br>a <em>blind spot.</em></h1>
-    <p class="opening-sub">Nova Scotia's healthcare infrastructure is vast, funded, and modernizing. But between a patient's first symptom and their first clinical encounter lies a gap no system currently addresses.</p>
+    <p class="opening-sub">Approximately 60,000 Nova Scotians are without a family doctor. Emergency departments absorb non-urgent demand. Walk-in clinics and virtual care run at capacity. Between a patient's first symptom and their first clinical encounter lies a navigation gap no system currently addresses.</p>
     <div class="opening-scroll-cue"><span>Scroll to reveal</span><div class="scroll-line"></div></div>
   </div>
 </section>
+
+<!-- SECTION NAVIGATOR -->
+<div class="section-toc">
+  <div class="toc-bar">
+    <div class="toc-label">Navigate</div>
+    <div class="toc-divider"></div>
+    <a class="toc-item" href="#crisis"><span class="toc-num">01</span> The Crisis</a>
+    <a class="toc-item" href="#failure"><span class="toc-num">02</span> Failure Point</a>
+    <a class="toc-item" href="#interception"><span class="toc-num">03</span> KLARA Pipeline</a>
+    <a class="toc-item" href="#architecture"><span class="toc-num">04</span> Architecture</a>
+    <a class="toc-item" href="#ecosystem"><span class="toc-num">05</span> Ecosystem</a>
+    <a class="toc-item" href="#impact"><span class="toc-num">06</span> Impact</a>
+    <a class="toc-item" href="#trust"><span class="toc-num">07</span> Governance</a>
+    <a class="toc-item" href="#liveSystem"><span class="toc-num">08</span> Live System</a>
+    <a class="toc-item" href="#closing"><span class="toc-num">⬡</span> What's Next</a>
+  </div>
+</div>
 
 <!-- SECTION 1: CRISIS -->
 <section id="crisis" class="reveal-section">
@@ -367,7 +537,7 @@ body{font-family:var(--font-main);background:var(--bg-base);color:var(--text-pri
   <div class="section-inner">
     <div class="section-label"><span class="dot"></span> Section 01 — The Crisis</div>
     <h2 class="section-title">The numbers don't<br><em>lie quietly.</em></h2>
-    <p class="section-narrative">In 2023–24, Nova Scotia's emergency departments recorded over half a million visits. More than a third were non-urgent — patients who ended up in the wrong part of the system. Over 52,000 left without ever being seen.</p>
+    <p class="section-narrative">In 2023–24, Nova Scotia's emergency departments recorded over half a million visits — from Halifax to Cape Breton, Yarmouth to Truro. More than a third were non-urgent cases: CTAS Level 4 and 5 patients who could have been treated at a pharmacy, walk-in clinic, or through VirtualCareNS. Over 52,000 Nova Scotians left without ever being seen.</p>
     <div class="crisis-metrics">
       <div class="crisis-card">
         <div class="crisis-value" data-target="561139" data-prefix="" data-suffix="">0</div>
@@ -491,7 +661,7 @@ body{font-family:var(--font-main);background:var(--bg-base);color:var(--text-pri
       <!-- TRANSITION PANEL -->
       <div class="crisis-transition">
         <div class="crisis-transition-title"><span class="ctt-icon">◎</span> The missing layer</div>
-        <div class="crisis-transition-text">Nova Scotia's healthcare infrastructure is not the problem. The system lacks a decision layer that routes patients to the right care stream before they default to emergency departments.<br><br>KLARA introduces this missing navigation layer by guiding patients toward appropriate services such as pharmacies, virtual care, and primary care networks. This improves access to care while protecting emergency capacity.</div>
+        <div class="crisis-transition-text">Nova Scotia's healthcare infrastructure is not the problem — the province has invested hundreds of millions in OPOR, VirtualCareNS, Novari, and pharmacy prescribing expansion. The system lacks a decision layer that routes patients to the right care stream before they default to emergency departments.<br><br>KLARA addresses this gap by using conversational triage and real-time service information to guide Nova Scotians toward appropriate services — pharmacies for minor ailments, walk-in clinics, VirtualCareNS, or emergency services when necessary. This improves access to timely care while protecting emergency capacity across the province.</div>
       </div>
     </div>
   </div>
@@ -503,7 +673,7 @@ body{font-family:var(--font-main);background:var(--bg-base);color:var(--text-pri
   <div class="section-inner">
     <div class="section-label"><span class="dot"></span> Section 02 — The Failure Point</div>
     <h2 class="section-title">The moment of<br><em>no guidance.</em></h2>
-    <p class="section-narrative">When a Nova Scotian feels unwell, they face a decision the healthcare system was never designed to help them make: <strong style="color:var(--text-primary)">where should I go?</strong> No navigation layer. No decision support. Just fragmented options and a default path to the ED.</p>
+    <p class="section-narrative">When a Nova Scotian in Dartmouth, Bridgewater, or Antigonish feels unwell, they face a decision the healthcare system was never designed to help them make: <strong style="color:var(--text-primary)">where should I go?</strong> Pharmacies can prescribe for 19+ minor ailments. VirtualCareNS offers same-day consultations. Walk-in clinics serve thousands weekly. But no navigation layer connects patients to these options — so the default path leads to the emergency department.</p>
     <div class="fork-visual" id="forkVisual">
       <div class="fork-origin">?</div>
       <div class="fork-stem"></div>
@@ -578,7 +748,7 @@ body{font-family:var(--font-main);background:var(--bg-base);color:var(--text-pri
   <div class="section-inner" style="position:relative;overflow:visible">
     <div class="section-label"><span class="dot"></span> Section 03 — The Interception</div>
     <h2 class="section-title">KLARA intercepts the<br>decision <em>before</em> it fails.</h2>
-    <p class="section-narrative">KLARA processes patient input through a seven-stage pipeline. Click each stage to see how it works in practice — with a detailed explanation and live conversational example.</p>
+    <p class="section-narrative">KLARA uses conversational triage and real-time service information to route Nova Scotians to the most appropriate care pathway — pharmacies for minor ailments, VirtualCareNS for moderate concerns, 811 for nurse assessment, or emergency services when necessary. Click each stage to see how it works in practice.</p>
     <div class="pipeline-reveal">
       <div class="pipeline-layout">
         <!-- LEFT: Stage list -->
@@ -781,7 +951,7 @@ body{font-family:var(--font-main);background:var(--bg-base);color:var(--text-pri
   <div class="section-inner">
     <div class="section-label"><span class="dot"></span> Section 05 — Ecosystem Activation</div>
     <h2 class="section-title">The infrastructure <em>exists.</em><br>The delivery doesn't.</h2>
-    <p class="section-narrative">Nova Scotia has invested $365M in OPOR, $17M in Novari, and ongoing funding for VirtualCareNS, Virtual Hallway, and AI Scribe. These systems work. What's missing is the upstream navigation layer that connects patients to them. KLARA doesn't replace anything — it activates everything.</p>
+    <p class="section-narrative">Nova Scotia has invested $365M in OPOR, $17M in Novari, and ongoing funding for VirtualCareNS, Virtual Hallway, and AI Scribe. Walk-in clinics across HRM, pharmacies in every community, and Maple-powered virtual care all serve Nova Scotians daily. These systems work — but none of them solve the upstream problem. No single layer tells a patient in Shelburne whether to drive to Yarmouth Regional, call 811, or visit their local pharmacy. KLARA doesn't replace anything — it activates everything.</p>
 
     <div class="eco-grid">
       <div class="eco-card">
@@ -847,7 +1017,7 @@ body{font-family:var(--font-main);background:var(--bg-base);color:var(--text-pri
   <div class="section-inner">
     <div class="section-label"><span class="dot"></span> Section 06 — System Impact</div>
     <h2 class="section-title">Measurable value.<br><em>Moderate scenario.</em></h2>
-    <p class="section-narrative">KLARA's impact is modeled across four categories. Even the moderate scenario projects system value that exceeds implementation costs by 3:1 to 5:1.</p>
+    <p class="section-narrative">By reducing avoidable emergency visits and improving correct care routing across Nova Scotia, KLARA can help decrease wait times, improve healthcare resource allocation, and expand access to timely care. Even the moderate scenario projects system value that exceeds implementation costs by 3:1 to 5:1.</p>
     <div class="impact-grid">
       <div class="impact-card">
         <div class="impact-value" data-target="1.5" data-prefix="$" data-suffix="M" data-decimals="1">$0</div>
@@ -936,7 +1106,7 @@ body{font-family:var(--font-main);background:var(--bg-base);color:var(--text-pri
   <div class="section-inner">
     <div class="section-label"><span class="dot"></span> Section 07 — Trust & Infrastructure</div>
     <h2 class="section-title">Governance is<br><em>non-negotiable.</em></h2>
-    <p class="section-narrative">Navigation intelligence — not diagnostic authority. Every decision auditable, every override mandatory, every byte on Canadian soil.</p>
+    <p class="section-narrative">KLARA operates under Nova Scotia's PHIA, Canada's PIPEDA, and PIIDPA data residency requirements. Navigation intelligence — not diagnostic authority. Every routing decision is auditable, every emergency override is mandatory, and every byte of Nova Scotian patient data stays on Canadian soil.</p>
     <div class="trust-grid" id="trustGrid">
       <div class="trust-tile" data-delay="0"><div class="trust-status"></div><span class="trust-icon">🔒</span><div class="trust-name">PHIA</div><div class="trust-sub">Personal Health Information Act</div><div class="trust-expand"><div class="trust-expand-text">Nova Scotia's PHIA requires mandatory Record of User Activity for any system maintaining personal health information. KLARA operates under a custodian (NS Health) with full breach notification and consent management. PIA required before data access.</div></div></div>
       <div class="trust-tile" data-delay="120"><div class="trust-status"></div><span class="trust-icon">🛡</span><div class="trust-name">PIPEDA</div><div class="trust-sub">Federal Privacy Legislation</div><div class="trust-expand"><div class="trust-expand-text">Personal Information Protection and Electronic Documents Act — federal privacy alignment. KLARA's PHIA compliance exceeds PIPEDA requirements. Follows principles of consent, limited collection, accuracy, safeguards.</div></div></div>
@@ -948,15 +1118,146 @@ body{font-family:var(--font-main);background:var(--bg-base);color:var(--text-pri
   </div>
 </section>
 
+<!-- SECTION 08: LIVE SYSTEM EXECUTION -->
+<section id="liveSystem" class="reveal-section">
+  <div class="ambient-glow" style="background:rgba(224,176,82,.4);top:20%;right:-120px"></div>
+  <div class="section-inner">
+    <div class="section-label"><span class="dot"></span> Section 08 — Live System Execution</div>
+    <h2 class="section-title">Watch the pipeline<br><em>execute.</em></h2>
+    <p class="section-narrative">This is not a simulation. Enter a patient scenario below and observe how KLARA processes the input through seven pipeline stages — parsing symptoms, classifying risk, enriching with provincial context, scoring pathways, optimizing routing, and generating a FHIR R4 structured output. Every field in the NavigationContext updates in real time.</p>
+
+    <!-- Patient Input Area -->
+    <div class="demo-input-area">
+      <div class="demo-input-wrap">
+        <div class="demo-input-label"><span class="dil-dot"></span> Patient Scenario Input</div>
+        <textarea class="demo-textarea" id="demoInput" placeholder="Describe patient symptoms, e.g. 'I've had a sore throat and mild fever for two days. My chest feels a bit tight when I breathe deeply.'"></textarea>
+        <div class="demo-presets">
+          <button class="demo-preset" data-scenario="pharyngitis">Sore throat + fever + chest tightness</button>
+          <button class="demo-preset" data-scenario="uti">Burning urination for 3 days</button>
+          <button class="demo-preset" data-scenario="ankle">Twisted ankle, swelling, can bear weight</button>
+          <button class="demo-preset" data-scenario="chest_pain">Sudden chest pain, shortness of breath</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Execution Panel -->
+    <div class="system-execution">
+      <div class="exec-panel">
+        <div class="exec-header">
+          <div class="exec-header-left">
+            <div class="exec-status-dot" id="execStatusDot"></div>
+            <div>
+              <div class="exec-header-title">KLARA Middleware Engine</div>
+              <div class="exec-header-sub" id="execSessionId">SESSION: AWAITING INPUT</div>
+            </div>
+          </div>
+          <div>
+            <button class="exec-btn" id="execRunBtn" onclick="KLARAEngine.run()">◎ &nbsp; Execute Pipeline</button>
+            <button class="exec-btn-reset" id="execResetBtn" onclick="KLARAEngine.reset()">Reset</button>
+          </div>
+        </div>
+        <div class="exec-body">
+          <!-- LEFT: NavigationContext State -->
+          <div class="ctx-panel">
+            <div class="ctx-title"><span class="ctx-dot"></span> NavigationContext</div>
+            <div id="ctxFields">
+              <div class="ctx-field"><div class="ctx-field-key">session_id</div><div class="ctx-field-val empty" id="ctx-session">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">patient_input</div><div class="ctx-field-val empty" id="ctx-input">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">structured_symptoms</div><div class="ctx-field-val empty" id="ctx-symptoms">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">risk_classification</div><div class="ctx-field-val empty" id="ctx-risk">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">clinical_flags</div><div class="ctx-field-val empty" id="ctx-flags">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">location</div><div class="ctx-field-val empty" id="ctx-location">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">service_availability</div><div class="ctx-field-val empty" id="ctx-services">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">capacity_data</div><div class="ctx-field-val empty" id="ctx-capacity">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">routing_scores</div><div class="ctx-field-val empty" id="ctx-routing">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">optimization_result</div><div class="ctx-field-val empty" id="ctx-optresult">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">recommendation</div><div class="ctx-field-val empty" id="ctx-rec">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">output_document</div><div class="ctx-field-val empty" id="ctx-output">—</div></div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Pipeline Progress + Results -->
+          <div class="results-panel">
+            <div class="pipeline-progress" id="pipelineProgress">
+              <div class="progress-stage" id="ps-intake"><div class="progress-node" id="pn-intake">1</div><div class="progress-info"><div class="progress-name">Intake Processing</div></div><div class="progress-time" id="pt-intake">—</div></div>
+              <div class="progress-stage" id="ps-risk"><div class="progress-node" id="pn-risk">2</div><div class="progress-info"><div class="progress-name">Risk Classification</div></div><div class="progress-time" id="pt-risk">—</div></div>
+              <div class="progress-stage" id="ps-context"><div class="progress-node" id="pn-context">3</div><div class="progress-info"><div class="progress-name">Context Enrichment</div></div><div class="progress-time" id="pt-context">—</div></div>
+              <div class="progress-stage" id="ps-routing"><div class="progress-node" id="pn-routing">4</div><div class="progress-info"><div class="progress-name">Capacity-Aware Routing</div></div><div class="progress-time" id="pt-routing">—</div></div>
+              <div class="progress-stage" id="ps-optimize"><div class="progress-node" id="pn-optimize">5</div><div class="progress-info"><div class="progress-name">Optimization Engine</div></div><div class="progress-time" id="pt-optimize">—</div></div>
+              <div class="progress-stage" id="ps-recommend"><div class="progress-node" id="pn-recommend">6</div><div class="progress-info"><div class="progress-name">Care Recommendation</div></div><div class="progress-time" id="pt-recommend">—</div></div>
+              <div class="progress-stage" id="ps-output"><div class="progress-node" id="pn-output">7</div><div class="progress-info"><div class="progress-name">FHIR Output Generation</div></div><div class="progress-time" id="pt-output">—</div></div>
+            </div>
+
+            <!-- Optimization Results (hidden until stage completes) -->
+            <div class="opt-results" id="optResults">
+              <div class="opt-title"><span class="opt-icon">⬟</span> Prescriptive Optimization Results</div>
+              <div class="opt-pathways" id="optPathways"></div>
+              <div class="opt-objective">
+                <div class="opt-objective-label">System strain objective</div>
+                <div class="opt-objective-val" id="optObjective">—</div>
+              </div>
+            </div>
+
+            <!-- FHIR Output Viewer (hidden until stage completes) -->
+            <div class="fhir-viewer" id="fhirViewer">
+              <div class="fhir-header">
+                <div class="fhir-header-left">
+                  <span class="fhir-badge">FHIR R4</span>
+                  <span class="fhir-header-title">Structured Intake Document</span>
+                </div>
+              </div>
+              <div class="fhir-body"><div class="fhir-json" id="fhirJson"></div></div>
+              <div class="fhir-footer">
+                <span class="fhir-footer-text">HL7 FHIR R4 · CA Core+ v0.3.0</span>
+                <button class="fhir-copy-btn" onclick="KLARAEngine.copyFHIR()">Copy Bundle</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CANCELLATION REROUTING NOTIFICATION (floating) -->
+<div class="cancel-notification" id="cancelNotification">
+  <div class="cancel-header">
+    <div class="cancel-icon">⟳</div>
+    <div class="cancel-title">Appointment Rerouted</div>
+  </div>
+  <div class="cancel-body" id="cancelBody">
+    Your scheduled <strong>VirtualCareNS</strong> appointment was cancelled due to provider unavailability. KLARA has identified an alternative care pathway: <strong>Dartmouth Walk-in Clinic</strong> — current wait time 22 minutes, 4.2 km from your location.
+  </div>
+  <div class="cancel-actions">
+    <button class="cancel-accept" onclick="KLARAEngine.acceptReroute()">Accept New Pathway</button>
+    <button class="cancel-dismiss" onclick="KLARAEngine.dismissCancel()">Dismiss</button>
+  </div>
+</div>
+
+<!-- TELEMETRY STATUS BAR -->
+<div class="telemetry-bar" id="telemetryBar">
+  <div class="telem-left">
+    <div class="telem-item"><span class="telem-dot green"></span> KLARA v2.4.1</div>
+    <div class="telem-item"><span class="telem-dot gold"></span> Sessions: <span id="telemSessions">0</span></div>
+    <div class="telem-item"><span class="telem-dot teal"></span> Pathways Assigned: <span id="telemPathways">0</span></div>
+    <div class="telem-item">Avg Latency: <span id="telemLatency">—</span></div>
+  </div>
+  <div class="telem-right">
+    <span>Telemetry → Tableau</span>
+    <button class="telem-toggle" onclick="KLARAEngine.toggleTelemetry()">Hide</button>
+  </div>
+</div>
+
 <!-- CLOSING -->
 <section id="closing" class="reveal-section">
   <div class="section-inner" style="text-align:center">
     <div class="section-label" style="justify-content:center"><span class="dot"></span> What Comes Next</div>
     <h2 class="section-title" style="text-align:center">The gap is <em>navigable.</em></h2>
-    <p class="section-narrative" style="margin:0 auto 20px;text-align:center;max-width:560px">Nova Scotia has the infrastructure, the investment, and the urgency. KLARA is the activation layer that connects $365M in digital health spending to the patient who doesn't know where to go.</p>
+    <p class="section-narrative" style="margin:0 auto 20px;text-align:center;max-width:600px">Approximately 60,000 Nova Scotians are without a family doctor. Walk-in clinics and virtual care run at capacity. Emergency departments absorb what the system can't route. Nova Scotia has the infrastructure and the investment — $365M in OPOR, $17M in Novari, ongoing funding for VirtualCareNS. KLARA is the activation layer that connects these investments to the patient in Shelburne, Dartmouth, or Cape Breton who doesn't know where to go.</p>
     <div class="closing-buttons">
       <button class="closing-cta" onclick="window.scrollTo({top:0,behavior:'smooth'})">◎ &nbsp; Return to the Beginning</button>
       <button class="closing-cta-secondary" onclick="downloadPDF()">↓ &nbsp; Download Evidence Report (PDF)</button>
+      <a class="closing-cta-tableau" href="https://public.tableau.com" target="_blank" rel="noopener">📊 &nbsp; View Tableau Dashboard</a>
     </div>
   </div>
 </section>
@@ -1091,6 +1392,294 @@ function downloadPDF(){
   const url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download='KLARA_OS_Evidence_Report.pdf';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════ */
+/* KLARA ENGINE — NavigationContext + Pipeline Execution + Backend Bridge */
+/* ═══════════════════════════════════════════════════════════════════════ */
+
+const KLARAEngine = (function(){
+  'use strict';
+
+  const API_BASE = '/klara';
+  const API_ENDPOINTS = {
+    intake: API_BASE+'/intake', risk: API_BASE+'/risk', context: API_BASE+'/context',
+    routing: API_BASE+'/routing', optimize: API_BASE+'/optimize', recommend: API_BASE+'/recommend',
+    output: API_BASE+'/output', stream: API_BASE+'/session/stream', cancel: API_BASE+'/cancel/monitor'
+  };
+
+  let NavigationContext = {session_id:null,patient_input:null,structured_symptoms:null,risk_classification:null,clinical_flags:null,location:null,service_availability:null,capacity_data:null,routing_scores:null,optimization_result:null,recommendation:null,output_document:null};
+  let telemetry = {sessions:0,pathways:0,totalLatency:0,events:[]};
+  let telemetryVisible = false;
+
+  const scenarios = {
+    pharyngitis: {
+      input:"I've had a sore throat and mild fever for two days. My chest feels a bit tight when I breathe deeply.",
+      symptoms:[{concept:'Pharyngitis',code:'363746003',severity:'moderate'},{concept:'Pyrexia, low-grade',code:'386661006',severity:'mild'},{concept:'Dyspnoea on exertion',code:'267036007',severity:'mild'}],
+      duration:'48 hours, progressive',
+      risk:{level:'YELLOW',score:45,rationale:'Chest tightness + fever = moderate concern. Clinical assessment within 24h.'},
+      flags:['Active salbutamol Rx (DIS/SHARE)','No PCP (NFPR registered)'],
+      location:{city:'Halifax',zone:'Central',postal:'B3H'},
+      services:{virtualcare:{wait:12,status:'available'},utc:{wait:35,name:'Dartmouth UTC'},ed:{wait:186,name:'QEII ED'},pharmacy:{appropriate:false,reason:'Yellow case'}},
+      pathways:[{name:'VirtualCareNS',score:0.92,wait:'12 min',recommended:true},{name:'Dartmouth UTC',score:0.74,wait:'35 min',recommended:false},{name:'QEII Emergency',score:0.31,wait:'3.1 hr',recommended:false},{name:'Pharmacy',score:0.0,wait:'N/A',recommended:false}],
+      objective:0.087, recommendation:'Virtual Care consultation — available now with ~12 min wait. Existing respiratory history warrants same-day clinical assessment.'
+    },
+    uti: {
+      input:"I've been experiencing a burning sensation when urinating for about 3 days. No fever, no back pain.",
+      symptoms:[{concept:'Dysuria',code:'49650001',severity:'moderate'},{concept:'Urinary frequency',code:'162116003',severity:'mild'}],
+      duration:'72 hours, stable',
+      risk:{level:'GREEN',score:22,rationale:'Classic UTI presentation. No systemic signs. Pharmacy-treatable under minor ailments.'},
+      flags:['No relevant medication history','Has PCP — next available in 6 days'],
+      location:{city:'Dartmouth',zone:'Central',postal:'B2W'},
+      services:{virtualcare:{wait:18,status:'available'},utc:{wait:42,name:'Dartmouth UTC'},ed:{wait:210,name:'Dartmouth General ED'},pharmacy:{appropriate:true,name:'Shoppers Drug Mart — Cole Harbour',wait:'< 15 min'}},
+      pathways:[{name:'Pharmacy (Minor Ailment)',score:0.96,wait:'< 15 min',recommended:true},{name:'VirtualCareNS',score:0.68,wait:'18 min',recommended:false},{name:'Dartmouth UTC',score:0.35,wait:'42 min',recommended:false},{name:'Emergency Dept',score:0.08,wait:'3.5 hr',recommended:false}],
+      objective:0.042, recommendation:'Pharmacy visit for UTI assessment under NS Minor Ailment Prescribing. Your nearest pharmacy can assess and prescribe today.'
+    },
+    ankle: {
+      input:"I twisted my ankle playing basketball about an hour ago. It's swollen and hurts, but I can still put some weight on it.",
+      symptoms:[{concept:'Ankle sprain',code:'44465007',severity:'moderate'},{concept:'Localized swelling',code:'442672001',severity:'moderate'},{concept:'Weight-bearing with difficulty',code:'228158008',severity:'mild'}],
+      duration:'1 hour, acute onset',
+      risk:{level:'GREEN',score:28,rationale:'Able to bear weight. No deformity. Ottawa Ankle Rules likely negative.'},
+      flags:['No relevant medication history','No PCP'],
+      location:{city:'Truro',zone:'Northern',postal:'B2N'},
+      services:{virtualcare:{wait:14,status:'available'},utc:{wait:25,name:'Colchester UTC'},ed:{wait:95,name:'Colchester East Hants'},pharmacy:{appropriate:false,reason:'Requires physical examination'}},
+      pathways:[{name:'Colchester UTC',score:0.88,wait:'25 min',recommended:true},{name:'VirtualCareNS',score:0.52,wait:'14 min',recommended:false},{name:'Colchester East Hants ED',score:0.41,wait:'1.6 hr',recommended:false},{name:'Pharmacy',score:0.0,wait:'N/A',recommended:false}],
+      objective:0.063, recommendation:'Walk-in at Colchester UTC — 25 min estimated wait. Physical exam needed to rule out fracture.'
+    },
+    chest_pain: {
+      input:"I'm having sudden sharp chest pain and trouble breathing. It started 20 minutes ago. I feel dizzy.",
+      symptoms:[{concept:'Acute chest pain',code:'29857009',severity:'severe'},{concept:'Dyspnoea at rest',code:'161941007',severity:'severe'},{concept:'Dizziness',code:'404640003',severity:'moderate'}],
+      duration:'20 minutes, acute onset',
+      risk:{level:'RED',score:92,rationale:'EMERGENCY — Acute chest pain + dyspnoea at rest + dizziness. Possible cardiac event.'},
+      flags:['RED FLAG: Acute chest pain','RED FLAG: Dyspnoea at rest','MANDATORY ESCALATION'],
+      location:{city:'Sydney',zone:'Eastern',postal:'B1P'},
+      services:{virtualcare:{wait:null,status:'not_appropriate'},utc:{wait:null,status:'not_appropriate'},ed:{wait:0,name:'Cape Breton Regional Hospital'},pharmacy:{appropriate:false}},
+      pathways:[{name:'911 / Emergency Dept',score:1.00,wait:'Immediate',recommended:true},{name:'VirtualCareNS',score:0.0,wait:'BLOCKED',recommended:false},{name:'Walk-in',score:0.0,wait:'BLOCKED',recommended:false},{name:'Pharmacy',score:0.0,wait:'BLOCKED',recommended:false}],
+      objective:0.0, recommendation:'CALL 911 IMMEDIATELY. This presentation requires emergency medical attention. Do not drive yourself.'
+    }
+  };
+
+  const pipelineStages = [
+    {id:'intake',endpoint:'intake',latency:[280,420]},{id:'risk',endpoint:'risk',latency:[350,520]},
+    {id:'context',endpoint:'context',latency:[200,380]},{id:'routing',endpoint:'routing',latency:[300,500]},
+    {id:'optimize',endpoint:'optimize',latency:[450,700]},{id:'recommend',endpoint:'recommend',latency:[250,400]},
+    {id:'output',endpoint:'output',latency:[180,320]}
+  ];
+
+  function uid(){return 'KLR-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).substr(2,4).toUpperCase()}
+  function randBetween(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+  function $(id){return document.getElementById(id)}
+  function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+
+  function updateCtxField(key,value,html){
+    const mapping={session_id:'ctx-session',patient_input:'ctx-input',structured_symptoms:'ctx-symptoms',risk_classification:'ctx-risk',clinical_flags:'ctx-flags',location:'ctx-location',service_availability:'ctx-services',capacity_data:'ctx-capacity',routing_scores:'ctx-routing',optimization_result:'ctx-optresult',recommendation:'ctx-rec',output_document:'ctx-output'};
+    const target=$(mapping[key]);if(!target)return;target.classList.remove('empty');
+    if(html)target.innerHTML=value;else target.textContent=value;
+  }
+
+  function setStageState(stageId,state,timeMs){
+    const ps=$('ps-'+stageId),pn=$('pn-'+stageId),pt=$('pt-'+stageId);if(!ps)return;
+    ps.classList.remove('stage-active','stage-complete');pn.classList.remove('active','completed','error-node');
+    if(state==='active'){ps.classList.add('stage-active');pn.classList.add('active');pt.textContent='...';}
+    else if(state==='complete'){ps.classList.add('stage-complete');pn.classList.add('completed');pn.textContent='✓';if(timeMs!==undefined)pt.textContent=timeMs+'ms';}
+    else if(state==='error'){pn.classList.add('error-node');pt.textContent='ERR';}
+  }
+
+  async function apiCall(endpoint,payload){
+    // Production: return await fetch(API_ENDPOINTS[endpoint],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.json());
+    const stage=pipelineStages.find(s=>s.endpoint===endpoint);
+    const latency=stage?randBetween(stage.latency[0],stage.latency[1]):randBetween(200,400);
+    await wait(latency); return {success:true,latency_ms:latency};
+  }
+
+  function connectStream(sessionId){
+    // Production: const evtSource = new EventSource(API_ENDPOINTS.stream+'?session='+sessionId);
+    // evtSource.addEventListener('stage:intake_complete', ...); etc.
+  }
+
+  function emitTelemetry(event,data){
+    telemetry.events.push({timestamp:new Date().toISOString(),event:event,session_id:NavigationContext.session_id,data:data});
+    // Production: navigator.sendBeacon('/klara/telemetry',JSON.stringify(entry));
+    updateTelemetryBar();
+  }
+
+  function updateTelemetryBar(){
+    $('telemSessions').textContent=telemetry.sessions;
+    $('telemPathways').textContent=telemetry.pathways;
+    if(telemetry.sessions>0)$('telemLatency').textContent=Math.round(telemetry.totalLatency/telemetry.sessions)+'ms';
+  }
+
+  function generateFHIR(ctx,scenario){
+    const rec=scenario.pathways.find(p=>p.recommended);
+    return {
+      resourceType:"Bundle",type:"document",
+      meta:{profile:["http://hl7.org/fhir/ca/core/StructureDefinition/profile-bundle"],lastUpdated:new Date().toISOString()},
+      identifier:{system:"urn:klara:session",value:ctx.session_id},
+      entry:[
+        {resource:{resourceType:"Composition",status:"final",type:{coding:[{system:"http://loinc.org",code:"11488-4",display:"Consultation note"}]},title:"KLARA Navigation Intake Document",date:new Date().toISOString(),
+          section:[
+            {title:"Presenting Symptoms",text:{status:"generated",div:scenario.symptoms.map(s=>s.concept+' (SNOMED:'+s.code+')').join('; ')}},
+            {title:"Risk Classification",text:{status:"generated",div:scenario.risk.level+' — Score: '+scenario.risk.score+'/100. '+scenario.risk.rationale}},
+            {title:"Routing Recommendation",text:{status:"generated",div:rec?rec.name+' (Score:'+rec.score+')':'N/A'}}
+          ]}},
+        {resource:{resourceType:"Observation",status:"final",code:{coding:[{system:"http://klara.ns.ca/fhir/CodeSystem/risk-class",code:scenario.risk.level.toLowerCase()}]},valueQuantity:{value:scenario.risk.score,unit:"score",system:"http://klara.ns.ca/fhir/units"}}}
+      ]
+    };
+  }
+
+  function renderFHIR(bundle){
+    return JSON.stringify(bundle,null,2)
+      .replace(/"([^"]+)":/g,'<span class="fk">"$1"</span>:')
+      .replace(/: "([^"]+)"/g,': <span class="fs">"$1"</span>')
+      .replace(/: (\d+\.?\d*)/g,': <span class="fv">$1</span>')
+      .replace(/: (true|false)/g,': <span class="fb">$1</span>');
+  }
+
+  function renderOptimization(pathways,objective){
+    const c=$('optPathways');c.innerHTML='';
+    pathways.forEach((p,i)=>{
+      const div=document.createElement('div');div.className='opt-path'+(p.recommended?' recommended':'');
+      const pct=Math.round(p.score*100),col=p.recommended?'var(--green)':(p.score>0.5?'var(--gold)':'var(--text-muted)');
+      div.innerHTML='<div class="opt-path-rank">#'+(i+1)+'</div><div class="opt-path-name">'+p.name+(p.recommended?' ✓':'')+'</div><div class="opt-path-score">'+p.score.toFixed(2)+'</div><div class="opt-path-bar"><div class="opt-path-bar-fill" style="width:'+pct+'%;background:'+col+'"></div></div>';
+      c.appendChild(div);
+    });
+    $('optObjective').textContent='min(Σ strain) = '+objective.toFixed(3);
+    $('optResults').classList.add('visible');
+  }
+
+  async function run(){
+    const input=$('demoInput').value.trim();
+    if(!input){$('demoInput').focus();$('demoInput').style.borderColor='var(--amber)';setTimeout(()=>$('demoInput').style.borderColor='',1500);return;}
+    let scenario=null;const il=input.toLowerCase();
+    if(il.includes('chest pain')||il.includes('trouble breathing'))scenario=scenarios.chest_pain;
+    else if(il.includes('burn')&&il.includes('urinat'))scenario=scenarios.uti;
+    else if(il.includes('ankle')||il.includes('twist'))scenario=scenarios.ankle;
+    else scenario=scenarios.pharyngitis;
+
+    reset();
+    const sessionId=uid();NavigationContext.session_id=sessionId;NavigationContext.patient_input=input;
+    $('execStatusDot').className='exec-status-dot running';
+    $('execSessionId').textContent='SESSION: '+sessionId;$('execRunBtn').disabled=true;
+    emitTelemetry('session_start',{input_length:input.length});telemetry.sessions++;
+    let totalLatency=0;connectStream(sessionId);
+
+    // STAGE 1: INTAKE
+    setStageState('intake','active');updateCtxField('session_id',sessionId);
+    updateCtxField('patient_input','"'+input.substring(0,80)+(input.length>80?'...':'')+'"');
+    const r1=await apiCall('intake',{session_id:sessionId,input:input});totalLatency+=r1.latency_ms;
+    NavigationContext.structured_symptoms=scenario.symptoms;
+    updateCtxField('structured_symptoms',scenario.symptoms.map(s=>'<code>'+s.concept+'</code> <span style="color:var(--text-muted)">('+s.code+')</span>').join('<br>'),true);
+    setStageState('intake','complete',r1.latency_ms);
+
+    // STAGE 2: RISK
+    setStageState('risk','active');
+    const r2=await apiCall('risk',{session_id:sessionId});totalLatency+=r2.latency_ms;
+    NavigationContext.risk_classification=scenario.risk;
+    updateCtxField('risk_classification','<span class="risk-'+scenario.risk.level.toLowerCase()+'">'+scenario.risk.level+' — '+scenario.risk.score+'/100</span><br><span style="color:var(--text-muted);font-size:11px">'+scenario.risk.rationale+'</span>',true);
+    setStageState('risk','complete',r2.latency_ms);emitTelemetry('risk_classification',{level:scenario.risk.level,score:scenario.risk.score});
+
+    // STAGE 3: CONTEXT
+    setStageState('context','active');
+    const r3=await apiCall('context',{session_id:sessionId});totalLatency+=r3.latency_ms;
+    NavigationContext.clinical_flags=scenario.flags;NavigationContext.location=scenario.location;
+    updateCtxField('clinical_flags',scenario.flags.map(f=>f.includes('RED FLAG')?'<span style="color:var(--red);font-weight:600">⚠ '+f+'</span>':f).join('<br>'),true);
+    updateCtxField('location',scenario.location.city+', NS · Zone: '+scenario.location.zone+' · '+scenario.location.postal);
+    setStageState('context','complete',r3.latency_ms);
+
+    // STAGE 4: ROUTING
+    setStageState('routing','active');
+    const r4=await apiCall('routing',{session_id:sessionId});totalLatency+=r4.latency_ms;
+    NavigationContext.service_availability=scenario.services;
+    const svcHtml=Object.entries(scenario.services).map(([k,v])=>{
+      if(v.appropriate===false)return'<span style="color:var(--text-muted)">'+k+': Not appropriate'+(v.reason?' — '+v.reason:'')+'</span>';
+      if(v.status==='not_appropriate')return'<span style="color:var(--text-muted)">'+k+': BLOCKED</span>';
+      return k+': <span style="color:var(--green)">'+(v.wait!==null?v.wait+(typeof v.wait==='number'?' min':''):'N/A')+'</span>'+(v.name?' · '+v.name:'');
+    }).join('<br>');
+    updateCtxField('service_availability',svcHtml,true);
+    updateCtxField('capacity_data','Real-time feeds active · Zone: '+scenario.location.zone);
+    NavigationContext.routing_scores=scenario.pathways;
+    updateCtxField('routing_scores',scenario.pathways.map(p=>p.name+': <code>'+p.score.toFixed(2)+'</code>').join('<br>'),true);
+    setStageState('routing','complete',r4.latency_ms);
+
+    // STAGE 5: OPTIMIZE
+    setStageState('optimize','active');
+    const r5=await apiCall('optimize',{session_id:sessionId});totalLatency+=r5.latency_ms;
+    NavigationContext.optimization_result={pathways:scenario.pathways,objective:scenario.objective};
+    const recPath=scenario.pathways.find(p=>p.recommended);
+    updateCtxField('optimization_result','Solver: min(Σ strain) = <code>'+scenario.objective.toFixed(3)+'</code><br>Optimal: <span style="color:var(--green);font-weight:600">'+(recPath?recPath.name:'N/A')+'</span>',true);
+    renderOptimization(scenario.pathways,scenario.objective);
+    setStageState('optimize','complete',r5.latency_ms);
+
+    // STAGE 6: RECOMMEND
+    setStageState('recommend','active');
+    const r6=await apiCall('recommend',{session_id:sessionId});totalLatency+=r6.latency_ms;
+    NavigationContext.recommendation=scenario.recommendation;
+    const isRed=scenario.risk.level==='RED';
+    updateCtxField('recommendation',(isRed?'<span style="color:var(--red);font-weight:700">🚨 ':'<span style="color:var(--green)">✓ ')+scenario.recommendation+'</span>',true);
+    setStageState('recommend','complete',r6.latency_ms);
+    emitTelemetry('pathway_assignment',{pathway:recPath?recPath.name:'emergency',risk:scenario.risk.level});telemetry.pathways++;
+
+    // STAGE 7: FHIR OUTPUT
+    setStageState('output','active');
+    const r7=await apiCall('output',{session_id:sessionId});totalLatency+=r7.latency_ms;
+    const fhirBundle=generateFHIR(NavigationContext,scenario);NavigationContext.output_document=fhirBundle;
+    updateCtxField('output_document','<code>FHIR R4 Bundle</code> · '+fhirBundle.entry.length+' resources · <span style="color:var(--green)">Generated</span>',true);
+    $('fhirJson').innerHTML=renderFHIR(fhirBundle);$('fhirViewer').classList.add('visible');
+    setStageState('output','complete',r7.latency_ms);
+
+    // COMPLETE
+    $('execStatusDot').className='exec-status-dot complete';
+    $('execSessionId').textContent='SESSION: '+sessionId+' · COMPLETE · '+totalLatency+'ms';
+    $('execRunBtn').disabled=false;telemetry.totalLatency+=totalLatency;
+    emitTelemetry('session_completion',{total_latency_ms:totalLatency,risk:scenario.risk.level});
+    updateTelemetryBar();
+    if(!telemetryVisible){telemetryVisible=true;$('telemetryBar').classList.add('visible');}
+    if(scenario.risk.level==='YELLOW')setTimeout(()=>$('cancelNotification').classList.add('visible'),6000);
+  }
+
+  function reset(){
+    NavigationContext={session_id:null,patient_input:null,structured_symptoms:null,risk_classification:null,clinical_flags:null,location:null,service_availability:null,capacity_data:null,routing_scores:null,optimization_result:null,recommendation:null,output_document:null};
+    document.querySelectorAll('#ctxFields .ctx-field-val').forEach(el=>{el.textContent='—';el.className='ctx-field-val empty';});
+    pipelineStages.forEach((s,i)=>{
+      const ps=$('ps-'+s.id),pn=$('pn-'+s.id),pt=$('pt-'+s.id);
+      if(ps)ps.classList.remove('stage-active','stage-complete');
+      if(pn){pn.classList.remove('active','completed','error-node');pn.textContent=i+1;}
+      if(pt)pt.textContent='—';
+    });
+    $('optResults').classList.remove('visible');$('optPathways').innerHTML='';$('optObjective').textContent='—';
+    $('fhirViewer').classList.remove('visible');$('fhirJson').innerHTML='';
+    $('execStatusDot').className='exec-status-dot';$('execSessionId').textContent='SESSION: AWAITING INPUT';$('execRunBtn').disabled=false;
+    $('cancelNotification').classList.remove('visible');
+  }
+
+  function copyFHIR(){
+    if(NavigationContext.output_document){
+      navigator.clipboard.writeText(JSON.stringify(NavigationContext.output_document,null,2)).then(()=>{
+        const btn=document.querySelector('.fhir-copy-btn');btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy Bundle',1500);
+      }).catch(()=>{});
+    }
+  }
+
+  document.querySelectorAll('.demo-preset').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const key=btn.dataset.scenario;
+      if(scenarios[key]){$('demoInput').value=scenarios[key].input;$('demoInput').style.borderColor='var(--gold)';setTimeout(()=>$('demoInput').style.borderColor='',800);}
+    });
+  });
+
+  const lsObs=new IntersectionObserver(entries=>{entries.forEach(en=>{if(en.isIntersecting)en.target.classList.add('in-view');});},{threshold:.1});
+  const lsEl=document.getElementById('liveSystem');if(lsEl)lsObs.observe(lsEl);
+
+  return {
+    run:run,reset:reset,
+    acceptReroute:function(){$('cancelNotification').classList.remove('visible');emitTelemetry('cancellation_reroute_accepted',{});telemetry.pathways++;updateTelemetryBar();},
+    dismissCancel:function(){$('cancelNotification').classList.remove('visible');},
+    copyFHIR:copyFHIR,
+    toggleTelemetry:function(){telemetryVisible=!telemetryVisible;$('telemetryBar').classList.toggle('visible',telemetryVisible);},
+    getContext:function(){return Object.assign({},NavigationContext);},
+    getTelemetry:function(){return Object.assign({},telemetry);},
+    API_ENDPOINTS:API_ENDPOINTS
+  };
+})();
 </script>
 </body>
 </html>

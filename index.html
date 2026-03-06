@@ -3,899 +3,1683 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KLARA OS — System Architecture</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>KLARA OS — System Reveal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #080c14;
-    --surface: #0d1420;
-    --surface2: #111927;
-    --border: rgba(255,255,255,0.07);
-    --border-bright: rgba(255,255,255,0.14);
-    --teal: #2dd4bf;
-    --teal-dim: rgba(45,212,191,0.12);
-    --teal-glow: rgba(45,212,191,0.25);
-    --blue: #60a5fa;
-    --blue-dim: rgba(96,165,250,0.1);
-    --amber: #fbbf24;
-    --amber-dim: rgba(251,191,36,0.1);
-    --rose: #fb7185;
-    --rose-dim: rgba(251,113,133,0.1);
-    --violet: #a78bfa;
-    --violet-dim: rgba(167,139,250,0.1);
-    --text: #e2e8f0;
-    --text-muted: #64748b;
-    --text-dim: #94a3b8;
-  }
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 300;
-    line-height: 1.7;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Subtle grid bg */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(45,212,191,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(45,212,191,0.03) 1px, transparent 1px);
-    background-size: 48px 48px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .page {
-    position: relative;
-    z-index: 1;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 40px 100px;
-  }
-
-  /* ─── HEADER ─── */
-  header {
-    padding: 72px 0 56px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 64px;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: end;
-    gap: 40px;
-  }
-
-  .wordmark {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 18px;
-  }
-
-  .wordmark-icon {
-    width: 38px;
-    height: 38px;
-    border: 1.5px solid var(--teal);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    flex-shrink: 0;
-  }
-
-  .wordmark-icon::after {
-    content: '';
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--teal);
-    box-shadow: 0 0 12px var(--teal);
-  }
-
-  .wordmark-text {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--teal);
-  }
-
-  h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(2.2rem, 4vw, 3.4rem);
-    font-weight: 700;
-    line-height: 1.15;
-    color: #f1f5f9;
-    letter-spacing: -0.01em;
-  }
-
-  h1 span {
-    color: var(--teal);
-  }
-
-  .header-sub {
-    margin-top: 14px;
-    font-size: 15px;
-    color: var(--text-dim);
-    max-width: 560px;
-    font-weight: 300;
-    line-height: 1.65;
-  }
-
-  .header-meta {
-    text-align: right;
-    flex-shrink: 0;
-  }
-
-  .meta-badge {
-    display: inline-block;
-    padding: 5px 14px;
-    border: 1px solid var(--border-bright);
-    border-radius: 4px;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    display: block;
-  }
-
-  .meta-jurisdiction {
-    font-size: 13px;
-    color: var(--text-muted);
-  }
-
-  /* ─── SECTION TITLES ─── */
-  .section-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 10.5px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--teal);
-    margin-bottom: 10px;
-  }
-
-  h2 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: #f1f5f9;
-    margin-bottom: 16px;
-  }
-
-  /* ─── PIPELINE ─── */
-  .pipeline-section {
-    margin-bottom: 80px;
-  }
-
-  .pipeline-row {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    overflow-x: auto;
-    padding: 28px 0 10px;
-  }
-
-  .pipeline-step {
-    flex-shrink: 0;
-    text-align: center;
-    position: relative;
-    opacity: 0;
-    animation: fadeSlide 0.5s ease forwards;
-  }
-
-  .pipeline-step:nth-child(odd) { animation-delay: calc(var(--i, 0) * 0.08s); }
-
-  @keyframes fadeSlide {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .step-node {
-    width: 120px;
-    padding: 12px 10px;
-    background: var(--surface2);
-    border: 1px solid var(--border-bright);
-    border-radius: 8px;
-    font-size: 11.5px;
-    font-weight: 500;
-    color: var(--text-dim);
-    letter-spacing: 0.02em;
-    position: relative;
-    transition: border-color 0.2s, color 0.2s;
-  }
-
-  .step-node:hover {
-    border-color: var(--teal);
-    color: var(--text);
-  }
-
-  .step-node.active {
-    border-color: var(--teal);
-    color: var(--teal);
-    background: var(--teal-dim);
-    box-shadow: 0 0 20px rgba(45,212,191,0.1);
-  }
-
-  .step-arrow {
-    width: 36px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    font-size: 14px;
-    opacity: 0.5;
-  }
-
-  /* ─── ARCHITECTURE LAYERS ─── */
-  .architecture {
-    margin-bottom: 80px;
-  }
-
-  .arch-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-top: 32px;
-    position: relative;
-  }
-
-  /* Vertical connector line */
-  .arch-stack::before {
-    content: '';
-    position: absolute;
-    left: 30px;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background: linear-gradient(to bottom, transparent, var(--teal) 20%, var(--teal) 80%, transparent);
-    opacity: 0.2;
-  }
-
-  .layer-card {
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    overflow: hidden;
-    transition: border-color 0.3s;
-    opacity: 0;
-    animation: fadeSlide 0.6s ease forwards;
-  }
-
-  .layer-card:hover { border-color: var(--border-bright); }
-
-  .layer-card:nth-child(1) { animation-delay: 0.1s; --layer-accent: var(--blue); --layer-dim: var(--blue-dim); }
-  .layer-card:nth-child(2) { animation-delay: 0.2s; --layer-accent: var(--teal); --layer-dim: var(--teal-dim); }
-  .layer-card:nth-child(3) { animation-delay: 0.3s; --layer-accent: var(--violet); --layer-dim: var(--violet-dim); }
-  .layer-card:nth-child(4) { animation-delay: 0.4s; --layer-accent: var(--amber); --layer-dim: var(--amber-dim); }
-
-  .layer-card:hover { border-color: var(--layer-accent); }
-
-  .layer-header {
-    display: grid;
-    grid-template-columns: 64px 1fr auto;
-    align-items: center;
-    gap: 20px;
-    padding: 22px 28px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-  }
-
-  .layer-num {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--text-muted);
-    letter-spacing: 0.12em;
-  }
-
-  .layer-title-group { }
-
-  .layer-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: #f1f5f9;
-    margin-bottom: 2px;
-  }
-
-  .layer-subtitle {
-    font-size: 12px;
-    color: var(--text-muted);
-    font-family: 'DM Mono', monospace;
-    letter-spacing: 0.06em;
-  }
-
-  .layer-badge {
-    padding: 4px 12px;
-    border-radius: 40px;
-    font-size: 11px;
-    font-family: 'DM Mono', monospace;
-    letter-spacing: 0.08em;
-    border: 1px solid;
-    white-space: nowrap;
-  }
-
-  .layer-card:nth-child(1) .layer-badge { color: var(--blue); border-color: rgba(96,165,250,0.3); background: var(--blue-dim); }
-  .layer-card:nth-child(2) .layer-badge { color: var(--teal); border-color: rgba(45,212,191,0.3); background: var(--teal-dim); }
-  .layer-card:nth-child(3) .layer-badge { color: var(--violet); border-color: rgba(167,139,250,0.3); background: var(--violet-dim); }
-  .layer-card:nth-child(4) .layer-badge { color: var(--amber); border-color: rgba(251,191,36,0.3); background: var(--amber-dim); }
-
-  .layer-body {
-    padding: 28px 28px 32px;
-    background: var(--surface2);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 28px;
-  }
-
-  .layer-description {
-    font-size: 14px;
-    color: var(--text-dim);
-    line-height: 1.75;
-    font-weight: 300;
-  }
-
-  .layer-description p + p { margin-top: 10px; }
-
-  .components-panel { }
-
-  .components-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 12px;
-  }
-
-  .components-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-  }
-
-  .component-tag {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border-radius: 6px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid var(--border);
-    font-size: 12.5px;
-    color: var(--text-dim);
-    transition: all 0.2s;
-  }
-
-  .component-tag:hover {
-    background: rgba(255,255,255,0.05);
-    color: var(--text);
-    border-color: var(--border-bright);
-  }
-
-  .component-tag::before {
-    content: '';
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--layer-accent);
-    flex-shrink: 0;
-    box-shadow: 0 0 6px var(--layer-accent);
-  }
-
-  /* ─── CONNECTOR ARROWS ─── */
-  .layer-connector {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 40px;
-    position: relative;
-  }
-
-  .connector-line {
-    width: 1px;
-    height: 100%;
-    background: linear-gradient(to bottom, var(--border-bright), transparent);
-    position: absolute;
-  }
-
-  .connector-label {
-    background: var(--bg);
-    padding: 4px 12px;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    position: relative;
-    z-index: 1;
-  }
-
-  /* ─── NARRATIVE ─── */
-  .narrative-section {
-    margin-bottom: 80px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 32px;
-  }
-
-  .narrative-block {
-    padding: 32px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .narrative-block::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-  }
-
-  .narrative-block.primary::before { background: linear-gradient(90deg, var(--teal), transparent); }
-  .narrative-block.secondary::before { background: linear-gradient(90deg, var(--blue), transparent); }
-
-  .narrative-block h3 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #f1f5f9;
-    margin-bottom: 14px;
-  }
-
-  .narrative-block p {
-    font-size: 14px;
-    color: var(--text-dim);
-    line-height: 1.8;
-    font-weight: 300;
-  }
-
-  .narrative-block p + p { margin-top: 10px; }
-
-  /* ─── IMPACT STATS ─── */
-  .impact-section {
-    margin-bottom: 80px;
-  }
-
-  .impact-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-top: 28px;
-  }
-
-  .impact-card {
-    padding: 24px 20px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    text-align: center;
-    transition: border-color 0.2s;
-  }
-
-  .impact-card:hover { border-color: var(--border-bright); }
-
-  .impact-num {
-    font-family: 'Playfair Display', serif;
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--teal);
-    margin-bottom: 6px;
-    display: block;
-  }
-
-  .impact-label {
-    font-size: 12px;
-    color: var(--text-muted);
-    line-height: 1.4;
-  }
-
-  /* ─── FOOTER ─── */
-  footer {
-    border-top: 1px solid var(--border);
-    padding-top: 32px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .footer-left {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    text-transform: uppercase;
-  }
-
-  .footer-right {
-    font-size: 12px;
-    color: var(--text-muted);
-  }
-
-  .status-dot {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--teal);
-    margin-right: 7px;
-    box-shadow: 0 0 8px var(--teal);
-    animation: pulse 2s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-
-  /* ─── FLOW DIAGRAM ─── */
-  .flow-section {
-    margin-bottom: 80px;
-  }
-
-  .flow-visual {
-    margin-top: 28px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 32px 28px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .flow-visual::after {
-    content: 'KLARA OS — Navigation Pipeline';
-    position: absolute;
-    top: 14px;
-    right: 20px;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.14em;
-    color: var(--text-muted);
-    text-transform: uppercase;
-  }
-
-  .flow-steps {
-    display: flex;
-    align-items: stretch;
-    gap: 0;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
-
-  .flow-node {
-    flex: 1;
-    min-width: 110px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    position: relative;
-  }
-
-  .flow-node + .flow-node::before {
-    content: '→';
-    position: absolute;
-    left: -10px;
-    top: 22px;
-    color: var(--text-muted);
-    font-size: 14px;
-    opacity: 0.4;
-  }
-
-  .flow-circle {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: 1.5px solid var(--border-bright);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 10px;
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    color: var(--text-muted);
-    background: var(--surface2);
-    transition: all 0.2s;
-    flex-shrink: 0;
-  }
-
-  .flow-node:hover .flow-circle {
-    border-color: var(--teal);
-    color: var(--teal);
-    box-shadow: 0 0 16px rgba(45,212,191,0.15);
-  }
-
-  .flow-label {
-    font-size: 11.5px;
-    color: var(--text-muted);
-    line-height: 1.4;
-    max-width: 90px;
-  }
-
-  /* responsive */
-  @media (max-width: 768px) {
-    .page { padding: 0 20px 80px; }
-    header { grid-template-columns: 1fr; gap: 20px; }
-    .header-meta { text-align: left; }
-    .layer-body { grid-template-columns: 1fr; }
-    .narrative-section { grid-template-columns: 1fr; }
-    .impact-grid { grid-template-columns: repeat(2, 1fr); }
-    .flow-steps { flex-wrap: nowrap; }
-  }
+:root {
+  --bg-base:#090d14;--bg-surface:#0f1520;--bg-card:#141c2b;--bg-card-hover:#1a2640;
+  --border:rgba(255,255,255,0.06);--border-gold:rgba(224,176,82,0.3);
+  --gold:#E0B052;--gold-bright:#F5C966;--gold-dim:rgba(224,176,82,0.12);
+  --teal:#4FD1C5;--teal-dim:rgba(79,209,197,0.12);--teal-border:rgba(79,209,197,0.25);
+  --text-primary:#eef0f4;--text-secondary:#8a9ab5;--text-muted:#3d5070;
+  --cloud-blue:#94a8c8;--light-cloud:#b0c4de;
+  --green:#2ecc87;--green-dim:rgba(46,204,135,0.12);
+  --amber:#f0a500;--amber-dim:rgba(240,165,0,0.12);
+  --red:#e85d5d;--red-dim:rgba(232,93,93,0.12);
+  --font-main:'Outfit',sans-serif;--font-serif:'DM Serif Display',serif;--font-mono:'DM Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-main);background:var(--bg-base);color:var(--text-primary);line-height:1.6;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg-base)}::-webkit-scrollbar-thumb{background:var(--text-muted);border-radius:3px}
+
+.progress-track{position:fixed;top:0;left:0;right:0;height:2px;z-index:200;background:rgba(255,255,255,0.03)}
+.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold-bright));transition:width .15s ease-out;box-shadow:0 0 12px rgba(224,176,82,0.4)}
+
+.section-nav{position:fixed;right:28px;top:50%;transform:translateY(-50%);z-index:100;display:flex;flex-direction:column;gap:14px;align-items:flex-end}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.08);cursor:pointer;transition:all .4s;position:relative}
+.nav-dot.active{background:var(--gold);border-color:var(--gold);box-shadow:0 0 12px rgba(224,176,82,0.4)}
+.nav-dot::before{content:attr(data-label);position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);white-space:nowrap;opacity:0;transition:opacity .3s,color .3s;pointer-events:none}
+.nav-dot:hover::before{opacity:1;color:var(--text-secondary)}.nav-dot.active::before{opacity:1;color:var(--gold)}
+@media(max-width:900px){.section-nav{display:none}}
+
+.reveal-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:100px 40px;position:relative;overflow:hidden}
+.section-inner{max-width:980px;width:100%;position:relative;z-index:2}
+.section-label{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:24px;display:flex;align-items:center;gap:10px;opacity:0;transform:translateY(12px);transition:all .8s cubic-bezier(.16,1,.3,1)}
+.section-label .dot{width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.section-title{font-family:var(--font-serif);font-size:clamp(36px,5.5vw,60px);font-weight:400;line-height:1.08;color:var(--text-primary);margin-bottom:28px;letter-spacing:-.02em;opacity:0;transform:translateY(20px);transition:all 1s cubic-bezier(.16,1,.3,1) .15s}
+.section-title em{font-style:italic;color:var(--gold)}
+.section-narrative{font-size:17px;color:var(--text-secondary);line-height:1.8;max-width:640px;font-weight:300;opacity:0;transform:translateY(16px);transition:all 1s cubic-bezier(.16,1,.3,1) .3s}
+.in-view .section-label,.in-view .section-title,.in-view .section-narrative{opacity:1;transform:translateY(0)}
+.ambient-glow{position:absolute;width:400px;height:400px;border-radius:50%;pointer-events:none;filter:blur(120px);opacity:.04}
+
+/* OPENING */
+#opening{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden}
+.opening-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 35%,rgba(224,176,82,.04) 0%,transparent 70%),radial-gradient(ellipse 30% 60% at 20% 80%,rgba(14,30,58,.5) 0%,transparent 60%),radial-gradient(ellipse 30% 60% at 80% 80%,rgba(14,30,58,.5) 0%,transparent 60%)}
+.opening-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(224,176,82,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(224,176,82,.02) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 50% 50% at center,black,transparent);-webkit-mask-image:radial-gradient(ellipse 50% 50% at center,black,transparent)}
+.opening-content{position:relative;z-index:2;max-width:700px;padding:0 32px}
+.opening-badge{display:inline-flex;align-items:center;gap:8px;background:var(--gold-dim);border:1px solid var(--border-gold);border-radius:100px;padding:7px 18px;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:40px;opacity:0;animation:fadeUp 1s .3s forwards}
+.opening-title{font-family:var(--font-serif);font-size:clamp(44px,7vw,80px);font-weight:400;line-height:1.05;color:var(--text-primary);letter-spacing:-.02em;margin-bottom:28px;opacity:0;animation:fadeUp 1.2s .6s forwards}
+.opening-title em{color:var(--gold);font-style:italic}
+.opening-sub{font-size:18px;color:var(--text-secondary);font-weight:300;line-height:1.75;max-width:520px;margin:0 auto 48px;opacity:0;animation:fadeUp 1.2s .9s forwards}
+.opening-scroll-cue{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);opacity:0;animation:fadeUp 1s 1.4s forwards}
+.scroll-line{width:1px;height:40px;background:linear-gradient(180deg,var(--gold),transparent);animation:scrollPulse 2s ease-in-out infinite}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scrollPulse{0%,100%{opacity:.3}50%{opacity:.8}}
+
+/* SECTION 1: CRISIS — TEAL STAT VALUES */
+.crisis-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:48px;opacity:0;transform:translateY(24px);transition:all 1s cubic-bezier(.16,1,.3,1) .5s}
+.in-view .crisis-metrics{opacity:1;transform:translateY(0)}
+.crisis-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;position:relative;overflow:hidden;cursor:pointer;transition:all .45s cubic-bezier(.16,1,.3,1)}
+.crisis-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--teal),transparent);opacity:.6}
+.crisis-card:hover{border-color:var(--teal-border);transform:translateY(-3px);box-shadow:0 12px 40px rgba(79,209,197,.06);background:var(--bg-card-hover)}
+.crisis-value{font-family:var(--font-mono);font-size:34px;color:var(--teal);margin-bottom:6px;letter-spacing:-.02em}
+.crisis-label{font-size:14px;color:var(--cloud-blue);line-height:1.5}
+.crisis-sub{font-size:11px;color:var(--text-muted);margin-top:6px;font-family:var(--font-mono)}
+.crisis-source{max-height:0;overflow:hidden;opacity:0;transition:max-height .45s cubic-bezier(.16,1,.3,1),opacity .35s,margin .35s;margin-top:0}
+.crisis-card:hover .crisis-source{max-height:140px;opacity:1;margin-top:14px}
+.crisis-source-inner{border-top:1px solid var(--teal-border);padding-top:12px;display:flex;align-items:flex-start;gap:8px}
+.crisis-source-icon{font-size:13px;color:var(--green);flex-shrink:0;margin-top:2px}
+.crisis-source-text{font-size:12px;color:var(--cloud-blue);line-height:1.55}
+.crisis-source-text strong{color:var(--green);font-weight:600}
+@media(max-width:600px){.crisis-metrics{grid-template-columns:1fr}}
+
+/* SECTION 1 ENHANCEMENT: FLOW DIAGRAM + FUNNEL + TRANSITION */
+.crisis-flow-block{margin-top:64px;opacity:0;transform:translateY(24px);transition:all 1s cubic-bezier(.16,1,.3,1) .7s}
+.in-view .crisis-flow-block{opacity:1;transform:translateY(0)}
+.crisis-flow-title{font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:32px;display:flex;align-items:center;gap:10px}
+.crisis-flow-title .cft-dot{width:6px;height:6px;border-radius:50%;background:var(--teal)}
+
+/* Five-stage horizontal flow */
+.flow-stages{display:flex;align-items:flex-start;gap:0;position:relative}
+.flow-stage{flex:1;position:relative;padding:0 8px}
+.flow-stage-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px 16px;position:relative;transition:all .4s;min-height:220px}
+.flow-stage-card:hover{border-color:var(--teal-border);transform:translateY(-3px);box-shadow:0 8px 28px rgba(79,209,197,.06)}
+.flow-stage-icon{width:40px;height:40px;border-radius:10px;background:var(--teal-dim);border:1px solid var(--teal-border);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px}
+.flow-stage-num{font-family:var(--font-mono);font-size:9px;color:var(--teal);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+.flow-stage-name{font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:8px}
+.flow-stage-text{font-size:12px;color:var(--cloud-blue);line-height:1.55}
+.flow-stage-bullets{list-style:none;padding:0;margin-top:8px}
+.flow-stage-bullets li{font-size:11.5px;color:var(--cloud-blue);line-height:1.5;padding:2px 0 2px 12px;position:relative}
+.flow-stage-bullets li::before{content:'';position:absolute;left:0;top:9px;width:4px;height:4px;border-radius:50%;background:var(--teal);opacity:.5}
+/* Connector lines */
+.flow-connector{position:absolute;top:38px;right:-2px;width:calc(100% - 70px);height:2px;z-index:1}
+.flow-connector-line{width:100%;height:100%;background:linear-gradient(90deg,rgba(79,209,197,.15),rgba(79,209,197,.3))}
+.flow-connector-dot{position:absolute;right:-3px;top:-2px;width:6px;height:6px;border-radius:50%;background:var(--teal);opacity:.4}
+.flow-stage:last-child .flow-connector{display:none}
+@media(max-width:900px){
+  .flow-stages{flex-direction:column;gap:12px}
+  .flow-stage-card{min-height:auto}
+  .flow-connector{display:none!important}
+}
+
+/* Misrouting funnel */
+.misroute-funnel{margin-top:48px;display:flex;flex-direction:column;align-items:center;opacity:0;transform:translateY(20px);transition:all 1s cubic-bezier(.16,1,.3,1) .9s}
+.in-view .misroute-funnel{opacity:1;transform:translateY(0)}
+.funnel-top{width:420px;max-width:100%;background:var(--bg-card);border:1px solid var(--teal-border);border-radius:14px 14px 0 0;padding:18px 24px;text-align:center;font-size:14px;font-weight:500;color:var(--teal)}
+.funnel-mid{width:320px;max-width:85%;background:var(--bg-card);border-left:1px solid rgba(240,165,0,.2);border-right:1px solid rgba(240,165,0,.2);padding:16px 24px;text-align:center;font-size:13px;color:var(--amber);position:relative}
+.funnel-mid::before,.funnel-mid::after{content:'';position:absolute;top:0;width:0;height:0;border-style:solid}
+.funnel-mid::before{left:-1px;border-width:0 50px 0 0;border-color:transparent var(--bg-card) transparent transparent}
+.funnel-mid::after{right:-1px;border-width:0 0 0 50px;border-color:transparent transparent transparent var(--bg-card)}
+.funnel-bottom{width:220px;max-width:70%;background:var(--bg-card);border:1px solid rgba(232,93,93,.2);border-radius:0 0 14px 14px;padding:16px 20px;text-align:center;font-size:12.5px;color:var(--red);line-height:1.5}
+.funnel-taper-l,.funnel-taper-r{display:none}
+.funnel-neck{width:2px;height:12px;background:linear-gradient(180deg,var(--teal-border),rgba(240,165,0,.2))}
+.funnel-neck2{width:2px;height:12px;background:linear-gradient(180deg,rgba(240,165,0,.2),rgba(232,93,93,.2))}
+
+/* Transition panel */
+.crisis-transition{margin-top:48px;background:linear-gradient(135deg,var(--bg-card),rgba(224,176,82,.04));border:1px solid var(--border-gold);border-radius:18px;padding:36px;max-width:680px;margin-left:auto;margin-right:auto;opacity:0;transform:translateY(20px);transition:all 1s cubic-bezier(.16,1,.3,1) 1.1s}
+.in-view .crisis-transition{opacity:1;transform:translateY(0)}
+.crisis-transition-title{font-size:16px;font-weight:600;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.crisis-transition-title .ctt-icon{width:24px;height:24px;border-radius:6px;background:var(--gold-dim);border:1px solid var(--border-gold);display:flex;align-items:center;justify-content:center;font-size:12px}
+.crisis-transition-text{font-size:14px;color:var(--cloud-blue);line-height:1.75}
+
+/* SECTION 2: FAILURE — BRIGHT FORK */
+.fork-visual{margin-top:52px;display:flex;flex-direction:column;align-items:center;gap:0;opacity:0;transform:translateY(24px);transition:all 1s cubic-bezier(.16,1,.3,1) .5s}
+.in-view .fork-visual{opacity:1;transform:translateY(0)}
+.fork-origin{width:60px;height:60px;border-radius:50%;background:var(--bg-card);border:2px solid var(--amber);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;color:var(--amber);box-shadow:0 0 30px rgba(240,165,0,.2),0 0 60px rgba(240,165,0,.08);position:relative;z-index:2}
+.fork-stem{width:2px;height:40px;background:linear-gradient(180deg,var(--amber),rgba(240,165,0,.3))}
+.fork-branches{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;width:100%;max-width:760px;position:relative}
+.fork-branches::before{content:'';position:absolute;top:0;left:8%;right:8%;height:2px;background:linear-gradient(90deg,transparent,rgba(240,165,0,.4),rgba(240,165,0,.4),transparent)}
+.fork-path{text-align:center;padding-top:28px;position:relative;cursor:pointer;transition:all .4s}
+.fork-path::before{content:'';position:absolute;top:0;left:50%;width:2px;height:24px;background:rgba(240,165,0,.3)}
+.fork-path:hover{transform:translateY(-4px)}
+.fork-path-icon{width:52px;height:52px;border-radius:14px;background:var(--bg-card);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 10px;transition:all .4s;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.fork-path:hover .fork-path-icon{border-color:var(--amber);box-shadow:0 0 20px rgba(240,165,0,.15),0 8px 24px rgba(0,0,0,.4);background:var(--bg-card-hover)}
+.fork-path-name{font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:3px}
+.fork-path-status{font-size:10px;font-weight:600;letter-spacing:.08em;font-family:var(--font-mono)}
+/* Varied colors for fork statuses */
+.fork-path:nth-child(1) .fork-path-status{color:var(--red)}
+.fork-path:nth-child(2) .fork-path-status{color:var(--amber)}
+.fork-path:nth-child(3) .fork-path-status{color:var(--teal)}
+.fork-path:nth-child(4) .fork-path-status{color:var(--cloud-blue)}
+.fork-tooltip{max-height:0;overflow:hidden;opacity:0;transition:max-height .4s,opacity .3s,margin .3s;margin-top:0}
+.fork-path:hover .fork-tooltip{max-height:100px;opacity:1;margin-top:10px}
+@media(max-width:600px){.fork-branches{grid-template-columns:repeat(2,1fr);gap:12px}}
+
+/* SECTION 3: PIPELINE — RIGHT-EXPANDING */
+.pipeline-reveal{margin-top:56px;opacity:0;transform:translateY(24px);transition:all 1s cubic-bezier(.16,1,.3,1) .5s}
+.in-view .pipeline-reveal{opacity:1;transform:translateY(0)}
+.pipeline-stages{display:flex;flex-direction:column;gap:0;position:relative}
+.pipeline-stages::before{content:'';position:absolute;top:0;bottom:0;left:30px;width:2px;background:rgba(224,176,82,.08)}
+.pipe-stage{display:flex;align-items:flex-start;gap:18px;padding:16px 0;position:relative;opacity:.2;transform:translateX(-8px);transition:all .5s cubic-bezier(.16,1,.3,1);cursor:pointer;border-radius:16px}
+.pipe-stage.pipe-active{opacity:.65;transform:translateX(0)}
+.pipe-stage.pipe-complete{opacity:.5;transform:translateX(0)}
+.pipe-stage:hover{opacity:1!important;transform:translateX(0);background:rgba(224,176,82,.03)}
+.pipe-node{width:60px;height:60px;border-radius:50%;background:var(--bg-card);border:2px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;position:relative;z-index:2;transition:all .5s}
+.pipe-stage:hover .pipe-node{border-color:var(--gold);background:var(--gold-dim);box-shadow:0 0 0 8px rgba(224,176,82,.06),0 0 28px rgba(224,176,82,.2)}
+.pipe-stage.pipe-active .pipe-node{border-color:var(--gold);background:var(--gold-dim);box-shadow:0 0 0 6px rgba(224,176,82,.05),0 0 20px rgba(224,176,82,.12)}
+.pipe-stage.pipe-complete .pipe-node{border-color:var(--green);background:var(--green-dim)}
+.pipe-content{flex:1;padding-top:4px;min-width:0}
+.pipe-code{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--gold);margin-bottom:4px;text-transform:uppercase}
+.pipe-name{font-size:17px;font-weight:600;color:var(--text-primary);margin-bottom:6px}
+.pipe-desc{font-size:13px;color:var(--text-secondary);line-height:1.6;max-width:420px}
+/* RIGHT EXAMPLE PANEL — now click-controlled via JS */
+.pipe-example{position:absolute;left:calc(100% + 24px);top:0;width:340px;max-height:0;overflow:hidden;opacity:0;transition:max-height .5s cubic-bezier(.16,1,.3,1),opacity .4s;pointer-events:none;z-index:10}
+.pipe-example.pipe-example-visible{max-height:400px;opacity:1;pointer-events:auto}
+.pipe-example-inner{background:var(--bg-card);border:1px solid var(--border-gold);border-radius:14px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.pipe-example-label{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.pipe-chat{display:flex;flex-direction:column;gap:8px}
+.pipe-msg{border-radius:10px;padding:8px 12px;font-size:12px;line-height:1.5;max-width:90%}
+.pipe-msg.user{background:rgba(79,209,197,.1);border:1px solid var(--teal-border);color:var(--teal);align-self:flex-end}
+.pipe-msg.klara{background:rgba(224,176,82,.08);border:1px solid rgba(224,176,82,.15);color:var(--cloud-blue);align-self:flex-start}
+.pipe-msg .msg-label{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px;display:block}
+.pipe-msg.user .msg-label{color:var(--teal)}
+.pipe-msg.klara .msg-label{color:var(--gold)}
+.pipe-source-text{font-size:11px;color:var(--green);font-family:var(--font-mono);display:flex;align-items:center;gap:6px;margin-top:8px}
+/* Hide right panel on small screens, show below instead */
+@media(max-width:1200px){
+  .pipe-example{position:relative;left:0;top:0;width:100%;margin-top:8px}
+}
+
+/* SECTION 4: ARCHITECTURE */
+.arch-layers{margin-top:56px;display:flex;flex-direction:column;gap:16px;opacity:0;transform:translateY(24px);transition:all 1s cubic-bezier(.16,1,.3,1) .5s}
+.in-view .arch-layers{opacity:1;transform:translateY(0)}
+.arch-layer{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px 32px;display:flex;align-items:flex-start;gap:20px;position:relative;overflow:hidden;cursor:pointer;opacity:0;transform:translateY(16px);transition:all .5s cubic-bezier(.16,1,.3,1)}
+.arch-layer.arch-visible{opacity:1;transform:translateY(0)}
+.arch-layer:hover{border-color:var(--border-gold);background:var(--bg-card-hover);box-shadow:0 8px 32px rgba(224,176,82,.06)}
+.arch-layer::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);opacity:0;transition:opacity .6s}
+.arch-layer.arch-visible::before{opacity:1}
+.arch-num{font-family:var(--font-mono);font-size:28px;color:var(--gold);font-weight:400;line-height:1;flex-shrink:0;width:36px}
+.arch-info{flex:1}
+.arch-name{font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:6px}
+.arch-desc{font-size:13px;color:var(--text-muted);line-height:1.6}
+.arch-expand{max-height:0;overflow:hidden;opacity:0;transition:max-height .5s cubic-bezier(.16,1,.3,1),opacity .35s,margin .35s;margin-top:0}
+.arch-layer:hover .arch-expand{max-height:260px;opacity:1;margin-top:14px}
+.arch-expand-inner{border-top:1px solid var(--border-gold);padding-top:14px}
+.arch-expand-inner p{font-size:14px;color:var(--cloud-blue);line-height:1.7}
+.arch-expand-inner .arch-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.arch-tag{font-size:10px;font-weight:600;letter-spacing:.06em;padding:4px 10px;border-radius:6px;background:var(--gold-dim);color:var(--gold);border:1px solid rgba(224,176,82,.15)}
+.arch-connections{margin-top:32px;text-align:center;opacity:0;transition:opacity 1s ease 1.2s}
+.in-view .arch-connections{opacity:1}
+.arch-conn-line{display:inline-flex;align-items:center;gap:12px;padding:10px 24px;background:var(--bg-card);border:1px solid var(--border-gold);border-radius:100px;font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--gold)}
+
+/* NEW SECTION: ECOSYSTEM ACTIVATION */
+.eco-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px;opacity:0;transform:translateY(24px);transition:all 1s cubic-bezier(.16,1,.3,1) .5s}
+.in-view .eco-grid{opacity:1;transform:translateY(0)}
+.eco-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px;position:relative;overflow:hidden;transition:all .4s}
+.eco-card:hover{border-color:var(--teal-border);transform:translateY(-2px);box-shadow:0 8px 30px rgba(79,209,197,.06)}
+.eco-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--teal),transparent);opacity:.4}
+.eco-icon{font-size:28px;margin-bottom:12px}
+.eco-name{font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:4px}
+.eco-role{font-size:11px;color:var(--teal);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.eco-desc{font-size:12.5px;color:var(--cloud-blue);line-height:1.55}
+.eco-gap{font-size:11px;color:var(--text-muted);margin-top:8px;font-style:italic}
+.eco-klara{font-size:11.5px;color:var(--gold);margin-top:8px;font-weight:500}
+.eco-summary{margin-top:32px;background:linear-gradient(135deg,var(--bg-card),rgba(79,209,197,.04));border:1px solid var(--teal-border);border-radius:18px;padding:32px;text-align:center;opacity:0;transform:scale(.97);transition:all 1s cubic-bezier(.16,1,.3,1) .8s}
+.in-view .eco-summary{opacity:1;transform:scale(1)}
+.eco-summary-title{font-family:var(--font-serif);font-size:24px;color:var(--text-primary);margin-bottom:8px}
+.eco-summary-title em{color:var(--teal);font-style:italic}
+.eco-summary-text{font-size:14px;color:var(--cloud-blue);max-width:600px;margin:0 auto;line-height:1.7}
+@media(max-width:700px){.eco-grid{grid-template-columns:1fr}}
+
+/* SECTION 5: IMPACT */
+.impact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px;opacity:0;transform:translateY(24px);transition:all 1s cubic-bezier(.16,1,.3,1) .5s}
+.in-view .impact-grid{opacity:1;transform:translateY(0)}
+.impact-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;text-align:center;cursor:pointer;transition:all .45s cubic-bezier(.16,1,.3,1)}
+.impact-card:hover{border-color:var(--border-gold);transform:translateY(-3px);background:var(--bg-card-hover);box-shadow:0 12px 40px rgba(224,176,82,.06)}
+.impact-value{font-family:var(--font-mono);font-size:32px;color:var(--gold);margin-bottom:4px}
+.impact-label{font-size:12px;color:var(--text-secondary);line-height:1.4}
+.impact-source{max-height:0;overflow:hidden;opacity:0;transition:max-height .4s,opacity .3s,margin .3s;margin-top:0}
+.impact-card:hover .impact-source{max-height:100px;opacity:1;margin-top:12px}
+.impact-source-inner{border-top:1px solid rgba(224,176,82,.15);padding-top:10px;font-size:11px;color:var(--cloud-blue);line-height:1.5;text-align:left}
+.impact-source-inner strong{color:var(--green)}
+.impact-total{margin-top:24px;background:linear-gradient(135deg,var(--bg-card),rgba(224,176,82,.05));border:1px solid var(--border-gold);border-radius:20px;padding:40px;text-align:center;opacity:0;transform:scale(.96);transition:all 1s cubic-bezier(.16,1,.3,1) .8s}
+.in-view .impact-total{opacity:1;transform:scale(1)}
+.impact-total-label{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+.impact-total-value{font-family:var(--font-serif);font-size:clamp(44px,6vw,64px);color:var(--text-primary);letter-spacing:-.02em}
+.impact-total-value em{color:var(--gold);font-style:italic}
+.impact-total-note{font-size:13px;color:var(--text-muted);margin-top:12px}
+@media(max-width:650px){.impact-grid{grid-template-columns:1fr}}
+
+/* SECTION 6: TRUST */
+.trust-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:48px;opacity:0;transform:translateY(24px);transition:all 1s cubic-bezier(.16,1,.3,1) .5s}
+.in-view .trust-grid{opacity:1;transform:translateY(0)}
+.trust-tile{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px 16px;text-align:center;position:relative;overflow:hidden;cursor:pointer;opacity:0;transform:translateY(12px);transition:all .5s cubic-bezier(.16,1,.3,1)}
+.trust-tile.trust-visible{opacity:1;transform:translateY(0)}
+.trust-tile:hover{border-color:var(--border-gold);transform:translateY(-4px);box-shadow:0 12px 40px rgba(224,176,82,.08);background:var(--bg-card-hover)}
+.trust-icon{font-size:28px;margin-bottom:12px;display:block;transition:transform .4s}
+.trust-tile:hover .trust-icon{transform:scale(1.15)}
+.trust-name{font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px}
+.trust-sub{font-size:11px;color:var(--text-muted);line-height:1.4}
+.trust-status{position:absolute;top:12px;right:12px;width:7px;height:7px;border-radius:50%;background:var(--green);opacity:0;transition:opacity .6s}
+.trust-tile.trust-visible .trust-status{opacity:1}
+.trust-expand{max-height:0;overflow:hidden;opacity:0;transition:max-height .45s,opacity .3s,margin .3s;margin-top:0}
+.trust-tile:hover .trust-expand{max-height:140px;opacity:1;margin-top:10px}
+.trust-expand-text{font-size:11.5px;color:var(--cloud-blue);line-height:1.5;text-align:left;border-top:1px solid var(--border-gold);padding-top:10px}
+.confidence-bar-wrap{margin-top:40px;max-width:500px;opacity:0;transition:all 1s ease .8s}
+.in-view .confidence-bar-wrap{opacity:1}
+.confidence-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.confidence-label span:first-child{font-size:12px;font-weight:600;color:var(--text-secondary);letter-spacing:.08em;text-transform:uppercase}
+.confidence-label span:last-child{font-family:var(--font-mono);font-size:18px;color:var(--gold)}
+.confidence-track{height:6px;background:rgba(255,255,255,.04);border-radius:3px;overflow:hidden}
+.confidence-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold-bright));border-radius:3px;transition:width 2s cubic-bezier(.16,1,.3,1) 1s}
+@media(max-width:700px){.trust-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* SECTION NAVIGATOR — TABLE OF CONTENTS BAR */
+.section-toc{max-width:980px;margin:0 auto;padding:20px 40px 0;position:relative;z-index:10}
+.toc-bar{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:16px 24px;display:flex;align-items:center;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.toc-bar::-webkit-scrollbar{height:0}
+.toc-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);white-space:nowrap;margin-right:8px;flex-shrink:0}
+.toc-divider{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 4px}
+.toc-item{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all .3s;white-space:nowrap;text-decoration:none;flex-shrink:0;border:1px solid transparent}
+.toc-item:hover{color:var(--text-secondary);background:rgba(255,255,255,.03);border-color:var(--border)}
+.toc-item .toc-num{font-family:var(--font-mono);font-size:10px;color:var(--gold);opacity:.6}
+.toc-item:hover .toc-num{opacity:1}
+@media(max-width:600px){.section-toc{padding:12px 16px 0}.toc-bar{padding:12px 16px}}
+
+/* Tableau CTA */
+.closing-cta-tableau{display:inline-flex;align-items:center;gap:10px;background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-border);border-radius:14px;padding:17px 32px;font-family:var(--font-main);font-size:15px;font-weight:600;cursor:pointer;transition:all .3s;text-decoration:none}
+.closing-cta-tableau:hover{background:rgba(79,209,197,.15);transform:translateY(-2px);box-shadow:0 8px 24px rgba(79,209,197,.12)}
+
+/* CLOSING */
+#closing{text-align:center}
+.closing-buttons{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:40px;flex-wrap:wrap;opacity:0;transform:translateY(12px);transition:all .8s cubic-bezier(.16,1,.3,1) .5s}
+.in-view .closing-buttons{opacity:1;transform:translateY(0)}
+.closing-cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#0d1117;border:none;border-radius:14px;padding:18px 36px;font-family:var(--font-main);font-size:16px;font-weight:700;cursor:pointer;transition:all .3s}
+.closing-cta:hover{background:var(--gold-bright);transform:translateY(-2px);box-shadow:0 8px 32px rgba(224,176,82,.35)}
+.closing-cta-secondary{display:inline-flex;align-items:center;gap:10px;background:transparent;color:var(--gold);border:1px solid var(--border-gold);border-radius:14px;padding:17px 32px;font-family:var(--font-main);font-size:15px;font-weight:600;cursor:pointer;transition:all .3s}
+.closing-cta-secondary:hover{background:var(--gold-dim);transform:translateY(-2px);box-shadow:0 8px 24px rgba(224,176,82,.12)}
+
+/* CITATIONS — LIGHTER CLOUDY BLUE */
+.citations-section{max-width:980px;margin:0 auto;padding:60px 40px 40px;border-top:1px solid rgba(255,255,255,.04)}
+.citations-title{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:24px;display:flex;align-items:center;gap:10px}
+.citations-title .dot{width:6px;height:6px;border-radius:50%;background:var(--teal)}
+.citation-group{margin-bottom:24px}
+.citation-group-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--light-cloud);margin-bottom:10px}
+.citation-item{font-size:12.5px;color:var(--cloud-blue);line-height:1.65;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.02);display:flex;gap:10px}
+.citation-item .ci-num{font-family:var(--font-mono);color:var(--teal);font-size:11px;flex-shrink:0;width:20px;text-align:right}
+
+/* SECTION 2 ADDITIONS */
+.fork-tooltip-text{font-size:13.5px;color:var(--light-cloud);line-height:1.55;background:rgba(79,209,197,.06);border:1px solid var(--teal-border);border-radius:12px;padding:14px 16px}
+.s2-subsection{margin-top:48px;max-width:640px;margin-left:auto;margin-right:auto;opacity:0;transform:translateY(16px);transition:all 1s cubic-bezier(.16,1,.3,1) .7s}
+.in-view .s2-subsection{opacity:1;transform:translateY(0)}
+.s2-title{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.s2-title .s2-dot{width:5px;height:5px;border-radius:50%;background:var(--teal)}
+.s2-bullets{list-style:none;padding:0}
+.s2-bullets li{font-size:13px;color:var(--cloud-blue);line-height:1.6;padding:5px 0 5px 16px;position:relative}
+.s2-bullets li::before{content:'';position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--text-muted)}
+.s2-map-placeholder{margin-top:32px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:40px;text-align:center;opacity:0;transition:all 1s ease 1s}
+.in-view .s2-map-placeholder{opacity:1}
+.s2-map-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
+.s2-map-desc{font-size:12px;color:var(--text-muted);line-height:1.5}
+.s2-map-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+.s2-map-item{font-size:11px;color:var(--cloud-blue);text-align:center;padding:8px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px}
+
+/* SECTION 3 CLICK-BASED PIPELINE */
+.pipe-stage{cursor:pointer}
+.pipe-stage.pipe-selected{opacity:1!important;transform:translateX(0);background:rgba(224,176,82,.04);border-radius:16px}
+.pipe-stage.pipe-selected .pipe-node{border-color:var(--gold);background:var(--gold-dim);box-shadow:0 0 0 8px rgba(224,176,82,.06),0 0 28px rgba(224,176,82,.2)}
+.pipeline-layout{display:grid;grid-template-columns:280px 1fr 340px;gap:24px;margin-top:32px}
+.pipeline-mid-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px;min-height:200px;transition:all .4s ease}
+.pipeline-mid-panel.mid-active{border-color:var(--border-gold)}
+.mid-stage-code{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+.mid-stage-name{font-size:18px;font-weight:600;color:var(--text-primary);margin-bottom:10px}
+.mid-stage-desc{font-size:14px;color:var(--cloud-blue);line-height:1.7}
+.mid-stage-source{font-size:11px;color:var(--green);font-family:var(--font-mono);margin-top:14px}
+.pipeline-right-panel{background:var(--bg-card);border:1px solid var(--border-gold);border-radius:16px;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+@media(max-width:1100px){.pipeline-layout{grid-template-columns:1fr;}.pipeline-mid-panel,.pipeline-right-panel{max-width:100%}}
+
+/* SECTION 6 EXECUTIVE CATEGORIES */
+.exec-categories{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:40px}
+.exec-cat{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;cursor:pointer;transition:all .35s ease}
+.exec-cat:hover{border-color:var(--border-gold);transform:translateY(-2px)}
+.exec-cat.exec-active{border-color:var(--gold);background:var(--bg-card-hover);box-shadow:0 4px 20px rgba(224,176,82,.08)}
+.exec-cat-icon{font-size:24px;margin-bottom:8px}
+.exec-cat-name{font-size:13px;font-weight:600;color:var(--text-primary)}
+.exec-detail{margin-top:20px;background:var(--bg-card);border:1px solid var(--border-gold);border-radius:16px;padding:28px;display:none}
+.exec-detail.exec-detail-visible{display:block;animation:fadeUp .4s ease}
+.exec-detail-title{font-size:16px;font-weight:600;color:var(--gold);margin-bottom:14px}
+.exec-detail-list{list-style:none;padding:0}
+.exec-detail-list li{font-size:13.5px;color:var(--cloud-blue);line-height:1.6;padding:5px 0 5px 16px;position:relative}
+.exec-detail-list li::before{content:'';position:absolute;left:0;top:13px;width:6px;height:1px;background:var(--gold)}
+@media(max-width:700px){.exec-categories{grid-template-columns:repeat(2,1fr)}}
+
+.reveal-footer{border-top:1px solid var(--border);padding:40px;text-align:center;font-size:12px;color:var(--text-muted);line-height:1.6}
+.reveal-footer strong{color:var(--text-secondary);font-weight:600}
+@media(max-width:600px){.reveal-section{padding:80px 24px}.citations-section{padding:40px 24px}}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* ENHANCEMENT LAYER — Backend Integration Components          */
+/* ═══════════════════════════════════════════════════════════ */
+
+/* LIVE SYSTEM EXECUTION PANEL */
+.system-execution{margin-top:56px;opacity:0;transform:translateY(24px);transition:all 1s cubic-bezier(.16,1,.3,1) .5s}
+.in-view .system-execution{opacity:1;transform:translateY(0)}
+.exec-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;overflow:hidden;position:relative}
+.exec-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--teal),var(--gold));opacity:.6}
+.exec-header{display:flex;align-items:center;justify-content:space-between;padding:24px 28px;border-bottom:1px solid var(--border)}
+.exec-header-left{display:flex;align-items:center;gap:12px}
+.exec-status-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);transition:all .4s}
+@keyframes statusPulse{0%,100%{opacity:.4;box-shadow:0 0 0 0 rgba(46,204,135,0)}50%{opacity:1;box-shadow:0 0 0 6px rgba(46,204,135,.15)}}
+.exec-status-dot.running{background:var(--gold);animation:statusPulse 1s ease-in-out infinite}
+.exec-status-dot.complete{background:var(--green);animation:statusPulse 2s ease-in-out infinite}
+.exec-status-dot.error{background:var(--red);animation:none}
+.exec-header-title{font-size:13px;font-weight:600;color:var(--text-primary);letter-spacing:.04em}
+.exec-header-sub{font-size:10px;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:.06em}
+.exec-btn{display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:#0d1117;border:none;border-radius:10px;padding:10px 22px;font-family:var(--font-main);font-size:13px;font-weight:700;cursor:pointer;transition:all .3s;letter-spacing:.02em}
+.exec-btn:hover{background:var(--gold-bright);transform:translateY(-1px);box-shadow:0 6px 20px rgba(224,176,82,.3)}
+.exec-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.exec-btn-reset{background:transparent;color:var(--text-muted);border:1px solid var(--border);padding:10px 18px;border-radius:10px;font-family:var(--font-main);font-size:12px;font-weight:600;cursor:pointer;transition:all .3s;margin-left:8px}
+.exec-btn-reset:hover{color:var(--text-secondary);border-color:var(--text-muted)}
+.exec-body{display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+@media(max-width:900px){.exec-body{grid-template-columns:1fr}}
+
+/* LEFT: NavigationContext Viewer */
+.ctx-panel{padding:24px 28px;border-right:1px solid var(--border);overflow-y:auto;max-height:480px}
+.ctx-panel::-webkit-scrollbar{width:3px}.ctx-panel::-webkit-scrollbar-thumb{background:var(--text-muted);border-radius:2px}
+@media(max-width:900px){.ctx-panel{border-right:none;border-bottom:1px solid var(--border);max-height:320px}}
+.ctx-title{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.ctx-title .ctx-dot{width:5px;height:5px;border-radius:50%;background:var(--gold)}
+.ctx-field{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.02)}
+.ctx-field:last-child{border-bottom:none}
+.ctx-field-key{font-family:var(--font-mono);font-size:10.5px;color:var(--teal);letter-spacing:.04em;margin-bottom:3px}
+.ctx-field-val{font-size:12.5px;color:var(--cloud-blue);line-height:1.5;word-break:break-word}
+.ctx-field-val.empty{color:var(--text-muted);font-style:italic}
+.ctx-field-val code{font-family:var(--font-mono);font-size:11px;background:rgba(79,209,197,.06);border:1px solid var(--teal-border);border-radius:4px;padding:1px 5px;color:var(--teal)}
+.ctx-field-val .risk-green{color:var(--green);font-weight:600}
+.ctx-field-val .risk-yellow{color:var(--amber);font-weight:600}
+.ctx-field-val .risk-red{color:var(--red);font-weight:600}
+
+/* RIGHT: Pipeline Progress + Results */
+.results-panel{padding:24px 28px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;max-height:480px}
+.results-panel::-webkit-scrollbar{width:3px}.results-panel::-webkit-scrollbar-thumb{background:var(--text-muted);border-radius:2px}
+.pipeline-progress{display:flex;flex-direction:column;gap:0}
+.progress-stage{display:flex;align-items:center;gap:12px;padding:7px 0;position:relative}
+.progress-stage::before{content:'';position:absolute;left:9px;top:24px;width:1px;height:calc(100% - 10px);background:rgba(255,255,255,.04)}
+.progress-stage:last-child::before{display:none}
+.progress-node{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--text-muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;transition:all .5s;background:var(--bg-base);z-index:1}
+.progress-node.completed{border-color:var(--green);background:var(--green-dim);color:var(--green)}
+.progress-node.active{border-color:var(--gold);background:var(--gold-dim);color:var(--gold);box-shadow:0 0 0 4px rgba(224,176,82,.1)}
+.progress-node.error-node{border-color:var(--red);background:var(--red-dim);color:var(--red)}
+.progress-info{flex:1;min-width:0}
+.progress-name{font-size:12px;font-weight:500;color:var(--text-muted);transition:color .4s}
+.progress-stage.stage-complete .progress-name{color:var(--text-secondary)}
+.progress-stage.stage-active .progress-name{color:var(--text-primary);font-weight:600}
+.progress-time{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);flex-shrink:0}
+.progress-stage.stage-complete .progress-time{color:var(--green)}
+
+/* OPTIMIZATION RESULTS CARD */
+.opt-results{background:rgba(224,176,82,.03);border:1px solid var(--border-gold);border-radius:14px;padding:20px;opacity:0;transform:translateY(8px);transition:all .6s cubic-bezier(.16,1,.3,1)}
+.opt-results.visible{opacity:1;transform:translateY(0)}
+.opt-title{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.opt-title .opt-icon{width:18px;height:18px;border-radius:5px;background:var(--gold-dim);border:1px solid var(--border-gold);display:flex;align-items:center;justify-content:center;font-size:10px}
+.opt-pathways{display:flex;flex-direction:column;gap:8px}
+.opt-path{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-base);transition:all .3s}
+.opt-path.recommended{border-color:var(--green);background:rgba(46,204,135,.04)}
+.opt-path-rank{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);width:16px;flex-shrink:0}
+.opt-path.recommended .opt-path-rank{color:var(--green)}
+.opt-path-name{font-size:12px;color:var(--text-primary);flex:1;font-weight:500}
+.opt-path-score{font-family:var(--font-mono);font-size:11px;color:var(--gold);min-width:44px;text-align:right}
+.opt-path.recommended .opt-path-score{color:var(--green)}
+.opt-path-bar{width:60px;height:4px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden;flex-shrink:0}
+.opt-path-bar-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.16,1,.3,1)}
+.opt-objective{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.opt-objective-label{font-size:11px;color:var(--text-muted)}
+.opt-objective-val{font-family:var(--font-mono);font-size:13px;color:var(--gold);font-weight:600}
+
+/* FHIR OUTPUT VIEWER */
+.fhir-viewer{background:var(--bg-card);border:1px solid var(--teal-border);border-radius:16px;overflow:hidden;opacity:0;transform:translateY(8px);transition:all .6s cubic-bezier(.16,1,.3,1)}
+.fhir-viewer.visible{opacity:1;transform:translateY(0)}
+.fhir-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:rgba(79,209,197,.04);border-bottom:1px solid var(--teal-border)}
+.fhir-header-left{display:flex;align-items:center;gap:8px}
+.fhir-badge{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);background:var(--teal-dim);border:1px solid var(--teal-border);border-radius:6px;padding:3px 8px}
+.fhir-header-title{font-size:12px;font-weight:600;color:var(--text-primary)}
+.fhir-body{padding:16px 20px;max-height:220px;overflow-y:auto}
+.fhir-body::-webkit-scrollbar{width:3px}.fhir-body::-webkit-scrollbar-thumb{background:var(--text-muted);border-radius:2px}
+.fhir-json{font-family:var(--font-mono);font-size:11px;line-height:1.7;color:var(--cloud-blue);white-space:pre-wrap;word-break:break-all}
+.fhir-json .fk{color:var(--teal)}.fhir-json .fv{color:var(--gold)}.fhir-json .fs{color:var(--cloud-blue)}.fhir-json .fb{color:var(--green)}
+.fhir-footer{padding:10px 20px;border-top:1px solid var(--teal-border);display:flex;align-items:center;justify-content:space-between}
+.fhir-footer-text{font-size:10px;color:var(--text-muted);font-family:var(--font-mono)}
+.fhir-copy-btn{font-size:10px;color:var(--teal);background:var(--teal-dim);border:1px solid var(--teal-border);border-radius:6px;padding:4px 10px;cursor:pointer;font-family:var(--font-main);font-weight:600;transition:all .3s}
+.fhir-copy-btn:hover{background:rgba(79,209,197,.15)}
+
+/* CANCELLATION REROUTING NOTIFICATION */
+.cancel-notification{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(120px);z-index:300;background:var(--bg-card);border:1px solid var(--amber);border-radius:16px;padding:20px 28px;box-shadow:0 16px 48px rgba(0,0,0,.5),0 0 0 1px rgba(240,165,0,.1);max-width:520px;width:90%;transition:transform .6s cubic-bezier(.16,1,.3,1),opacity .4s;opacity:0;pointer-events:none}
+.cancel-notification.visible{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
+.cancel-notification::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--amber),transparent);border-radius:16px 16px 0 0}
+.cancel-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.cancel-icon{width:28px;height:28px;border-radius:8px;background:var(--amber-dim);border:1px solid rgba(240,165,0,.2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.cancel-title{font-size:14px;font-weight:600;color:var(--amber)}
+.cancel-body{font-size:13px;color:var(--cloud-blue);line-height:1.6}
+.cancel-body strong{color:var(--text-primary)}
+.cancel-actions{display:flex;gap:8px;margin-top:14px}
+.cancel-accept{background:var(--amber);color:#0d1117;border:none;border-radius:8px;padding:8px 18px;font-family:var(--font-main);font-size:12px;font-weight:700;cursor:pointer;transition:all .3s}
+.cancel-accept:hover{background:var(--gold-bright)}
+.cancel-dismiss{background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-family:var(--font-main);font-size:12px;font-weight:500;cursor:pointer;transition:all .3s}
+.cancel-dismiss:hover{color:var(--text-secondary);border-color:var(--text-muted)}
+
+/* TELEMETRY STATUS BAR */
+.telemetry-bar{position:fixed;bottom:0;left:0;right:0;z-index:150;background:rgba(9,13,20,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:8px 32px;display:flex;align-items:center;justify-content:space-between;font-size:10px;transform:translateY(100%);transition:transform .5s cubic-bezier(.16,1,.3,1);gap:16px}
+.telemetry-bar.visible{transform:translateY(0)}
+.telem-left{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.telem-item{display:flex;align-items:center;gap:6px;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:.04em}
+.telem-item .telem-dot{width:5px;height:5px;border-radius:50%}
+.telem-item .telem-dot.green{background:var(--green)}.telem-item .telem-dot.gold{background:var(--gold)}.telem-item .telem-dot.teal{background:var(--teal)}
+.telem-right{display:flex;align-items:center;gap:12px;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:.04em}
+.telem-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:4px;padding:2px 8px;font-family:var(--font-mono);font-size:9px;cursor:pointer;transition:all .3s}
+.telem-toggle:hover{color:var(--text-secondary);border-color:var(--text-muted)}
+@media(max-width:700px){.telemetry-bar{padding:6px 16px;gap:8px}.telem-item{font-size:9px}}
+
+/* SYSTEM DEMO INPUT */
+.demo-input-area{margin-top:24px;opacity:0;transform:translateY(16px);transition:all 1s cubic-bezier(.16,1,.3,1) .7s}
+.in-view .demo-input-area{opacity:1;transform:translateY(0)}
+.demo-input-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px;position:relative}
+.demo-input-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.4}
+.demo-input-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.demo-input-label .dil-dot{width:5px;height:5px;border-radius:50%;background:var(--gold)}
+.demo-textarea{width:100%;background:var(--bg-base);border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-family:var(--font-main);font-size:14px;color:var(--text-primary);line-height:1.6;resize:vertical;min-height:80px;max-height:160px;outline:none;transition:border-color .3s}
+.demo-textarea::placeholder{color:var(--text-muted)}
+.demo-textarea:focus{border-color:var(--border-gold)}
+.demo-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.demo-preset{font-size:11px;color:var(--cloud-blue);background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;transition:all .3s;font-family:var(--font-main)}
+.demo-preset:hover{border-color:var(--teal-border);color:var(--teal);background:var(--teal-dim)}
 </style>
 </head>
 <body>
-<div class="page">
 
-  <!-- ─── HEADER ─── -->
-  <header>
-    <div>
-      <div class="wordmark">
-        <div class="wordmark-icon"></div>
-        <span class="wordmark-text">KLARA OS</span>
+<div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+<nav class="section-nav" id="sectionNav">
+  <div class="nav-dot active" data-label="Opening" data-target="opening"></div>
+  <div class="nav-dot" data-label="The Crisis" data-target="crisis"></div>
+  <div class="nav-dot" data-label="Failure Point" data-target="failure"></div>
+  <div class="nav-dot" data-label="Interception" data-target="interception"></div>
+  <div class="nav-dot" data-label="Architecture" data-target="architecture"></div>
+  <div class="nav-dot" data-label="Ecosystem" data-target="ecosystem"></div>
+  <div class="nav-dot" data-label="Impact" data-target="impact"></div>
+  <div class="nav-dot" data-label="Trust" data-target="trust"></div>
+  <div class="nav-dot" data-label="Live System" data-target="liveSystem"></div>
+</nav>
+
+<!-- OPENING -->
+<section id="opening">
+  <div class="opening-bg"></div><div class="opening-grid"></div>
+  <div class="opening-content">
+    <div class="opening-badge"><span style="font-size:12px">⬡</span> System Architecture Reveal</div>
+    <h1 class="opening-title">Every system has<br>a <em>blind spot.</em></h1>
+    <p class="opening-sub">Approximately 60,000 Nova Scotians are without a family doctor. Emergency departments absorb non-urgent demand. Walk-in clinics and virtual care run at capacity. Between a patient's first symptom and their first clinical encounter lies a navigation gap no system currently addresses.</p>
+    <div class="opening-scroll-cue"><span>Scroll to reveal</span><div class="scroll-line"></div></div>
+  </div>
+</section>
+
+<!-- SECTION NAVIGATOR -->
+<div class="section-toc">
+  <div class="toc-bar">
+    <div class="toc-label">Navigate</div>
+    <div class="toc-divider"></div>
+    <a class="toc-item" href="#crisis"><span class="toc-num">01</span> The Crisis</a>
+    <a class="toc-item" href="#failure"><span class="toc-num">02</span> Failure Point</a>
+    <a class="toc-item" href="#interception"><span class="toc-num">03</span> KLARA Pipeline</a>
+    <a class="toc-item" href="#architecture"><span class="toc-num">04</span> Architecture</a>
+    <a class="toc-item" href="#ecosystem"><span class="toc-num">05</span> Ecosystem</a>
+    <a class="toc-item" href="#impact"><span class="toc-num">06</span> Impact</a>
+    <a class="toc-item" href="#trust"><span class="toc-num">07</span> Governance</a>
+    <a class="toc-item" href="#liveSystem"><span class="toc-num">08</span> Live System</a>
+    <a class="toc-item" href="#closing"><span class="toc-num">⬡</span> What's Next</a>
+  </div>
+</div>
+
+<!-- SECTION 1: CRISIS -->
+<section id="crisis" class="reveal-section">
+  <div class="ambient-glow" style="background:rgba(79,209,197,.5);top:-100px;right:-100px"></div>
+  <div class="section-inner">
+    <div class="section-label"><span class="dot"></span> Section 01 — The Crisis</div>
+    <h2 class="section-title">The numbers don't<br><em>lie quietly.</em></h2>
+    <p class="section-narrative">In 2023–24, Nova Scotia's emergency departments recorded over half a million visits — from Halifax to Cape Breton, Yarmouth to Truro. More than a third were non-urgent cases: CTAS Level 4 and 5 patients who could have been treated at a pharmacy, walk-in clinic, or through VirtualCareNS. Over 52,000 Nova Scotians left without ever being seen.</p>
+    <div class="crisis-metrics">
+      <div class="crisis-card">
+        <div class="crisis-value" data-target="561139" data-prefix="" data-suffix="">0</div>
+        <div class="crisis-label">Emergency department visits across Nova Scotia</div>
+        <div class="crisis-sub">2023–24 · NSH + IWK</div>
+        <div class="crisis-source"><div class="crisis-source-inner"><span class="crisis-source-icon">✓</span><div class="crisis-source-text"><strong>Confirmed</strong> — NS Government ED Accountability Report 2023–24. NSH: 519,310; IWK: 41,829. 625 per 1,000 population — 26% above CIHI national average.</div></div></div>
       </div>
-      <h1>Healthcare Navigation<br><span>Operating System</span></h1>
-      <p class="header-sub">A four-layer intelligence architecture designed to resolve healthcare access failure across Nova Scotia — routing citizens to the right care pathway before they enter the system incorrectly.</p>
+      <div class="crisis-card">
+        <div class="crisis-value" data-target="52521" data-prefix="" data-suffix="">0</div>
+        <div class="crisis-label">Patients who left without being seen</div>
+        <div class="crisis-sub">≈ 3× the national benchmark</div>
+        <div class="crisis-source"><div class="crisis-source-inner"><span class="crisis-source-icon">✓</span><div class="crisis-source-text"><strong>Confirmed</strong> — NS ED Report 2023–24; McNaughton et al., 2024, JACEP Open. Pre-pandemic Canadian median LWBS (Left Without Being Seen): ~3.5%. NS: 10.02%.</div></div></div>
+      </div>
+      <div class="crisis-card">
+        <div class="crisis-value" data-target="66768" data-prefix="" data-suffix="">0</div>
+        <div class="crisis-label">Nova Scotians without a family physician</div>
+        <div class="crisis-sub">Jan 2026 · Need a Family Practice Registry</div>
+        <div class="crisis-source"><div class="crisis-source-inner"><span class="crisis-source-icon">✓</span><div class="crisis-source-text"><strong>Confirmed</strong> — NS Health NFPR Updates 2024–2026. Peak: ~160,000 mid-2024. One in sixteen Nova Scotians lacks a regular primary care provider.</div></div></div>
+      </div>
+      <div class="crisis-card">
+        <div class="crisis-value" data-target="51552" data-prefix="" data-suffix=" hrs">0</div>
+        <div class="crisis-label">Rural emergency department closure hours</div>
+        <div class="crisis-sub">55% unplanned · physician shortages</div>
+        <div class="crisis-source"><div class="crisis-source-inner"><span class="crisis-source-icon">✓</span><div class="crisis-source-text"><strong>Confirmed</strong> — NS Government ED Report 2023–24. 28,171 unplanned hours. Worst: Roseway Hospital — 4,832 hours (201 days). All tertiary EDs had zero unplanned closures.</div></div></div>
+      </div>
     </div>
-    <div class="header-meta">
-      <span class="meta-badge">Architecture Overview</span>
-      <span class="meta-badge">Government Briefing</span>
-      <p class="meta-jurisdiction">Nova Scotia Health Authority<br>Province of Nova Scotia, Canada</p>
-    </div>
-  </header>
 
-  <!-- ─── PIPELINE ─── -->
-  <section class="pipeline-section">
-    <div class="section-label">Core System Pipeline</div>
-    <h2>How KLARA Routes Every Patient</h2>
-    <p style="font-size:14px;color:var(--text-dim);max-width:620px;">Every patient interaction passes through a deterministic seven-stage pipeline. Each stage refines the clinical picture until a safe, capacity-aware care recommendation is issued.</p>
+    <!-- FLOW DIAGRAM: Why the system defaults to EDs -->
+    <div class="crisis-flow-block">
+      <div class="crisis-flow-title"><span class="cft-dot"></span> Why the system defaults to Emergency Departments</div>
 
-    <div class="pipeline-row">
-      <div class="pipeline-step" style="--i:0">
-        <div class="step-node active">Patient Input</div>
-      </div>
-      <div class="step-arrow">→</div>
-      <div class="pipeline-step" style="--i:1">
-        <div class="step-node">Symptom Parsing</div>
-      </div>
-      <div class="step-arrow">→</div>
-      <div class="pipeline-step" style="--i:2">
-        <div class="step-node">Risk Classification</div>
-      </div>
-      <div class="step-arrow">→</div>
-      <div class="pipeline-step" style="--i:3">
-        <div class="step-node">Provincial Context Analysis</div>
-      </div>
-      <div class="step-arrow">→</div>
-      <div class="pipeline-step" style="--i:4">
-        <div class="step-node">Capacity-Aware Routing</div>
-      </div>
-      <div class="step-arrow">→</div>
-      <div class="pipeline-step" style="--i:5">
-        <div class="step-node">Care Recommendation</div>
-      </div>
-      <div class="step-arrow">→</div>
-      <div class="pipeline-step" style="--i:6">
-        <div class="step-node active">Structured Intake Output</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ─── ARCHITECTURE LAYERS ─── -->
-  <section class="architecture">
-    <div class="section-label">System Architecture</div>
-    <h2>Four-Layer Operating System Design</h2>
-    <p style="font-size:14px;color:var(--text-dim);max-width:680px;margin-bottom:8px;">KLARA OS is engineered as a layered platform — separating citizen interfaces, navigation intelligence, system integration, and provincial infrastructure into distinct, interoperable layers. Each layer is independently scalable and replaceable without disrupting the system.</p>
-
-    <div class="arch-stack">
-
-      <!-- LAYER 1 -->
-      <div class="layer-card">
-        <div class="layer-header">
-          <div class="layer-num">LAYER 01</div>
-          <div class="layer-title-group">
-            <div class="layer-title">User Interaction Layer</div>
-            <div class="layer-subtitle">Citizens · Clinicians · Administrators</div>
+      <div class="flow-stages">
+        <!-- Stage 1 -->
+        <div class="flow-stage">
+          <div class="flow-stage-card">
+            <div class="flow-stage-icon">❓</div>
+            <div class="flow-stage-num">Stage 1</div>
+            <div class="flow-stage-name">Patient Uncertainty</div>
+            <div class="flow-stage-text">Many Nova Scotians experience symptoms but lack clear guidance on where to seek care.</div>
+            <ul class="flow-stage-bullets">
+              <li>66,000 residents without a family physician</li>
+              <li>New residents navigating provincial health services</li>
+              <li>Rural access differences</li>
+              <li>Unclear entry points to care</li>
+            </ul>
           </div>
-          <div class="layer-badge">Interface Surface</div>
+          <div class="flow-connector"><div class="flow-connector-line"></div><div class="flow-connector-dot"></div></div>
         </div>
-        <div class="layer-body">
-          <div class="layer-description">
-            <p>The User Interaction Layer is the public face of KLARA OS — the surface through which citizens, clinicians, and system administrators engage with the platform. It is deliberately designed to be the simplest layer for end users while masking the complexity of the intelligence engine operating beneath it.</p>
-            <p>Citizens interact through a structured intake interface that guides them through symptom and situation input without requiring medical literacy. Administrators access a real-time system dashboard monitoring routing volumes, care pathway utilization, and escalation flags. Clinicians receive pre-structured intake summaries generated by the navigation engine, reducing intake friction and improving triage efficiency.</p>
-            <p>All interactions from this layer are passed downward as structured signals to the Navigation Intelligence Engine. The interface generates no decisions — it only captures, displays, and communicates.</p>
+
+        <!-- Stage 2 -->
+        <div class="flow-stage">
+          <div class="flow-stage-card">
+            <div class="flow-stage-icon">🔀</div>
+            <div class="flow-stage-num">Stage 2</div>
+            <div class="flow-stage-name">Multiple Care Pathways</div>
+            <div class="flow-stage-text">Nova Scotia already has several healthcare entry points.</div>
+            <ul class="flow-stage-bullets">
+              <li>Emergency Departments</li>
+              <li>Pharmacies able to prescribe for minor ailments</li>
+              <li>Virtual care platforms</li>
+              <li>811 Telehealth triage</li>
+            </ul>
+            <div class="flow-stage-text" style="margin-top:6px">However these options are not coordinated through a single navigation layer.</div>
           </div>
-          <div class="components-panel">
-            <div class="components-label">Core Components</div>
-            <div class="components-grid">
-              <div class="component-tag">Patient Intake Interface</div>
-              <div class="component-tag">Care Pathway Display Console</div>
-              <div class="component-tag">Administrator System Dashboard</div>
-              <div class="component-tag">Clinician Intake Summary View</div>
-              <div class="component-tag">Multilingual Accessibility Layer</div>
-              <div class="component-tag">Escalation Notification System</div>
+          <div class="flow-connector"><div class="flow-connector-line"></div><div class="flow-connector-dot"></div></div>
+        </div>
+
+        <!-- Stage 3 -->
+        <div class="flow-stage">
+          <div class="flow-stage-card">
+            <div class="flow-stage-icon">🔽</div>
+            <div class="flow-stage-num">Stage 3</div>
+            <div class="flow-stage-name">Default Routing</div>
+            <div class="flow-stage-text">Without guidance, approximately 30–35% of patients default to Emergency Departments for conditions that could be treated elsewhere.</div>
+            <div class="flow-stage-text" style="margin-top:6px;color:var(--amber);font-weight:500">This creates misrouted demand.</div>
+          </div>
+          <div class="flow-connector"><div class="flow-connector-line"></div><div class="flow-connector-dot"></div></div>
+        </div>
+
+        <!-- Stage 4 -->
+        <div class="flow-stage">
+          <div class="flow-stage-card">
+            <div class="flow-stage-icon">🏥</div>
+            <div class="flow-stage-num">Stage 4</div>
+            <div class="flow-stage-name">ED Intake</div>
+            <div class="flow-stage-text">Emergency Departments become the system's intake portal for both urgent and non-urgent cases.</div>
+            <ul class="flow-stage-bullets">
+              <li>Overcrowded triage</li>
+              <li>Long wait times</li>
+              <li>Patients leaving without being seen</li>
+            </ul>
+          </div>
+          <div class="flow-connector"><div class="flow-connector-line"></div><div class="flow-connector-dot"></div></div>
+        </div>
+
+        <!-- Stage 5 -->
+        <div class="flow-stage">
+          <div class="flow-stage-card">
+            <div class="flow-stage-icon">⚠</div>
+            <div class="flow-stage-num">Stage 5</div>
+            <div class="flow-stage-name">System Pressure</div>
+            <ul class="flow-stage-bullets">
+              <li>Over 561,000 emergency visits</li>
+              <li>More than 52,000 patients leaving without being seen</li>
+              <li>51,000+ hours of rural ED closures</li>
+            </ul>
+            <div class="flow-stage-text" style="margin-top:8px">Pressure driven by workforce shortages, physician burnout, and misallocated patient demand.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MISROUTING FUNNEL -->
+      <div class="misroute-funnel">
+        <div class="funnel-top">Patients seeking care</div>
+        <div class="funnel-neck"></div>
+        <div class="funnel-mid">30–35% routed to Emergency Departments unnecessarily</div>
+        <div class="funnel-neck2"></div>
+        <div class="funnel-bottom">Emergency Departments absorb non-urgent demand</div>
+      </div>
+
+      <!-- TRANSITION PANEL -->
+      <div class="crisis-transition">
+        <div class="crisis-transition-title"><span class="ctt-icon">◎</span> The missing layer</div>
+        <div class="crisis-transition-text">Nova Scotia's healthcare infrastructure is not the problem — the province has invested hundreds of millions in OPOR, VirtualCareNS, Novari, and pharmacy prescribing expansion. The system lacks a decision layer that routes patients to the right care stream before they default to emergency departments.<br><br>KLARA addresses this gap by using conversational triage and real-time service information to guide Nova Scotians toward appropriate services — pharmacies for minor ailments, walk-in clinics, VirtualCareNS, or emergency services when necessary. This improves access to timely care while protecting emergency capacity across the province.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 2: FAILURE POINT -->
+<section id="failure" class="reveal-section">
+  <div class="ambient-glow" style="background:rgba(240,165,0,.5);bottom:-100px;left:-100px"></div>
+  <div class="section-inner">
+    <div class="section-label"><span class="dot"></span> Section 02 — The Failure Point</div>
+    <h2 class="section-title">The moment of<br><em>no guidance.</em></h2>
+    <p class="section-narrative">When a Nova Scotian in Dartmouth, Bridgewater, or Antigonish feels unwell, they face a decision the healthcare system was never designed to help them make: <strong style="color:var(--text-primary)">where should I go?</strong> Pharmacies can prescribe for 19+ minor ailments. VirtualCareNS offers same-day consultations. Walk-in clinics serve thousands weekly. But no navigation layer connects patients to these options — so the default path leads to the emergency department.</p>
+    <div class="fork-visual" id="forkVisual">
+      <div class="fork-origin">?</div>
+      <div class="fork-stem"></div>
+      <div class="fork-branches">
+        <div class="fork-path">
+          <div class="fork-path-icon">🚨</div>
+          <div class="fork-path-name">Emergency Dept</div>
+          <div class="fork-path-status">DEFAULT PATH</div>
+          <div class="fork-tooltip"><div class="fork-tooltip-text">35% of NS ED visits are non-urgent (CTAS 4–5). Average wait: 2.96 hours. 90th-percentile at QEII Halifax: 7.1 hours.</div></div>
+        </div>
+        <div class="fork-path">
+          <div class="fork-path-icon">💻</div>
+          <div class="fork-path-name">Virtual Care</div>
+          <div class="fork-path-status">UNDERUTILIZED</div>
+          <div class="fork-tooltip"><div class="fork-tooltip-text">VirtualCareNS serves 150–200/day but turns away 100–150 daily. No upstream routing sends patients here first.</div></div>
+        </div>
+        <div class="fork-path">
+          <div class="fork-path-icon">💊</div>
+          <div class="fork-path-name">Pharmacy</div>
+          <div class="fork-path-status">INVISIBLE PATHWAY</div>
+          <div class="fork-tooltip"><div class="fork-tooltip-text">NS pharmacists prescribe for 19+ minor ailments. Most patients are completely unaware this care pathway exists.</div></div>
+        </div>
+        <div class="fork-path">
+          <div class="fork-path-icon">📞</div>
+          <div class="fork-path-name">811 Telehealth</div>
+          <div class="fork-path-status">VOICE ONLY</div>
+          <div class="fork-tooltip"><div class="fork-tooltip-text">24/7 nurse triage by phone. No structured data output — patients restart their entire intake at the destination.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Routing the Right Care -->
+    <div class="s2-subsection">
+      <div class="s2-title"><span class="s2-dot"></span> Routing the Right Care</div>
+      <ul class="s2-bullets">
+        <li>Directing minor conditions to pharmacies frees ED capacity for emergencies</li>
+        <li>Routing low-acuity cases to virtual care reduces unnecessary in-person wait times</li>
+        <li>Improving continuity after 811 triage by passing structured data to the destination</li>
+        <li>Introducing a decision layer for care navigation before patients enter the system</li>
+      </ul>
+    </div>
+
+    <!-- Mental Health Pressure -->
+    <div class="s2-subsection" style="transition-delay:.9s">
+      <div class="s2-title"><span class="s2-dot"></span> Mental Health Pressure</div>
+      <ul class="s2-bullets">
+        <li>Psychiatric assessments have increased significantly in recent years across Nova Scotia</li>
+        <li>Many mental health cases enter the system through the emergency department</li>
+        <li>AI therapeutic models are emerging but still require clinical validation</li>
+        <li>Future routing systems could support mental health pathways with appropriate safeguards</li>
+      </ul>
+    </div>
+
+    <!-- Regional Care Access — Map Placeholder -->
+    <div class="s2-map-placeholder">
+      <div class="s2-map-label">Regional Care Access</div>
+      <div class="s2-map-desc">Future integration — interactive Nova Scotia care access map</div>
+      <div class="s2-map-grid">
+        <div class="s2-map-item">🏥 Hospital<br>Locations</div>
+        <div class="s2-map-item">⏱ Avg ED<br>Wait Times</div>
+        <div class="s2-map-item">🚗 Commute<br>to Hospitals</div>
+        <div class="s2-map-item">👤 Regions Without<br>Family Doctors</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- SECTION 3: INTERCEPTION — RIGHT-EXPANDING PIPELINE -->
+<section id="interception" class="reveal-section">
+  <div class="ambient-glow" style="background:rgba(224,176,82,.5);top:50%;left:-150px;transform:translateY(-50%)"></div>
+  <div class="section-inner" style="position:relative;overflow:visible">
+    <div class="section-label"><span class="dot"></span> Section 03 — The Interception</div>
+    <h2 class="section-title">KLARA intercepts the<br>decision <em>before</em> it fails.</h2>
+    <p class="section-narrative">KLARA uses conversational triage and real-time service information to route Nova Scotians to the most appropriate care pathway — pharmacies for minor ailments, VirtualCareNS for moderate concerns, 811 for nurse assessment, or emergency services when necessary. Click each stage to see how it works in practice.</p>
+    <div class="pipeline-reveal">
+      <div class="pipeline-layout">
+        <!-- LEFT: Stage list -->
+        <div class="pipeline-stages" id="pipelineStages">
+
+        <div class="pipe-stage" data-delay="0" style="position:relative">
+          <div class="pipe-node">◎</div>
+          <div class="pipe-content">
+            <div class="pipe-code">Stage 01 · Input</div>
+            <div class="pipe-name">Patient Input</div>
+            <div class="pipe-desc">Multimodal intake via YourHealthNS app, web, or 811.</div>
+          </div>
+          <div class="pipe-example"><div class="pipe-example-inner">
+            <div class="pipe-example-label">Live Example · Patient Intake</div>
+            <div class="pipe-chat">
+              <div class="pipe-msg klara"><span class="msg-label">KLARA</span>Hi — I'm KLARA. Tell me what you're experiencing today.</div>
+              <div class="pipe-msg user"><span class="msg-label">Patient</span>I've had a sore throat and mild fever for two days. My chest feels a bit tight when I breathe deeply.</div>
             </div>
-          </div>
+            <div class="pipe-source-text" style="margin-top:12px">✓ Captures: complaint, duration, severity, location</div>
+          </div></div>
         </div>
-      </div>
 
-      <div class="layer-connector">
-        <div class="connector-line"></div>
-        <span class="connector-label">↓ Structured Patient Signals</span>
-      </div>
-
-      <!-- LAYER 2 -->
-      <div class="layer-card">
-        <div class="layer-header">
-          <div class="layer-num">LAYER 02</div>
-          <div class="layer-title-group">
-            <div class="layer-title">Navigation Intelligence Engine</div>
-            <div class="layer-subtitle">Symptom Parsing · Risk Scoring · Routing Logic</div>
+        <div class="pipe-stage" data-delay="150" style="position:relative">
+          <div class="pipe-node">⬡</div>
+          <div class="pipe-content">
+            <div class="pipe-code">Stage 02 · Parse</div>
+            <div class="pipe-name">Symptom Parsing</div>
+            <div class="pipe-desc">NLP converts free-text to SNOMED-CT clinical concepts.</div>
           </div>
-          <div class="layer-badge">Core Intelligence</div>
-        </div>
-        <div class="layer-body">
-          <div class="layer-description">
-            <p>The Navigation Intelligence Engine is the cognitive core of KLARA OS. It is the component that distinguishes this platform from a simple information tool — this layer makes decisions. It does not diagnose medical conditions; it classifies navigation risk and determines the most appropriate healthcare entry point for each individual patient.</p>
-            <p>Incoming patient signals are first processed by the Intake Processor, which structures and normalizes raw input. The Symptom Parsing System interprets the language of patient-reported concerns against a curated clinical navigation vocabulary. The Risk Classification Engine then assigns a triage-relevant risk tier — from self-care guidance through to emergency escalation — based on symptom patterns, urgency signals, and contextual flags.</p>
-            <p>The Healthcare Routing Engine applies provincial system awareness to convert a risk classification into a specific, actionable pathway. Capacity-aware routing logic queries real-time availability data from Layer 3 to avoid routing patients to saturated facilities. The Structured Output Generator produces a clinician-ready intake summary that accompanies the patient through their care journey.</p>
-          </div>
-          <div class="components-panel">
-            <div class="components-label">Core Components</div>
-            <div class="components-grid">
-              <div class="component-tag">Patient Intake Processor</div>
-              <div class="component-tag">Symptom Parsing System</div>
-              <div class="component-tag">Risk Classification Engine</div>
-              <div class="component-tag">Healthcare Routing Engine</div>
-              <div class="component-tag">Capacity-Aware Routing Logic</div>
-              <div class="component-tag">Structured Output Generator</div>
-              <div class="component-tag">Escalation Override Protocol</div>
+          <div class="pipe-example"><div class="pipe-example-inner">
+            <div class="pipe-example-label">What KLARA "sees"</div>
+            <div class="pipe-chat">
+              <div class="pipe-msg klara"><span class="msg-label">Parsed Output</span>"Sore throat" → <b>Pharyngitis</b><br>"Mild fever" → <b>Pyrexia, low-grade</b><br>"Tight chest on breathing" → <b>Dyspnoea on exertion</b><br>Duration: <b>48 hours, progressive</b></div>
             </div>
-          </div>
+            <div class="pipe-source-text">✓ SNOMED-CT (Systematized Nomenclature of Medicine)</div>
+          </div></div>
         </div>
-      </div>
 
-      <div class="layer-connector">
-        <div class="connector-line"></div>
-        <span class="connector-label">↓ Routing Queries · Real-Time Capacity Reads</span>
-      </div>
-
-      <!-- LAYER 3 -->
-      <div class="layer-card">
-        <div class="layer-header">
-          <div class="layer-num">LAYER 03</div>
-          <div class="layer-title-group">
-            <div class="layer-title">Healthcare System Integration Layer</div>
-            <div class="layer-subtitle">EMR · Telehealth · Provincial Records · Pharmacy</div>
+        <div class="pipe-stage" data-delay="300" style="position:relative">
+          <div class="pipe-node">△</div>
+          <div class="pipe-content">
+            <div class="pipe-code">Stage 03 · Classify</div>
+            <div class="pipe-name">Risk Classification</div>
+            <div class="pipe-desc">Green / Yellow / Red scoring using Schmitt-Thompson protocols.</div>
           </div>
-          <div class="layer-badge">Integration Fabric</div>
-        </div>
-        <div class="layer-body">
-          <div class="layer-description">
-            <p>The Integration Layer is the connective tissue between KLARA OS and Nova Scotia's existing digital health ecosystem. KLARA does not replace any of these systems — it orchestrates them. By reading from and writing to established provincial platforms, KLARA enhances existing infrastructure without displacing the clinical workflows that health professionals already depend on.</p>
-            <p>Integration with OPOR (One Person One Record) allows KLARA to contextualize navigation decisions against a patient's existing health record, identifying active conditions, prior ED visits, and medication profiles that influence routing priority. VirtualCareNS integration enables the routing engine to present telehealth as a live care option when appropriate — with availability confirmed before the recommendation is issued.</p>
-            <p>EMR integrations with Med Access and Accuro allow structured intake summaries to be delivered directly into clinician workflows. The DIS/SHARE medication layer prevents routing patients to pathways that may create unsafe medication interactions. Rural partner clinic networks are integrated as routable care nodes, expanding the system's coverage beyond urban centres.</p>
-          </div>
-          <div class="components-panel">
-            <div class="components-label">Integration Points</div>
-            <div class="components-grid">
-              <div class="component-tag">OPOR — One Person One Record</div>
-              <div class="component-tag">VirtualCareNS Telehealth</div>
-              <div class="component-tag">Med Access EMR</div>
-              <div class="component-tag">Accuro EMR</div>
-              <div class="component-tag">DIS / SHARE Medication Systems</div>
-              <div class="component-tag">Rural Partner Clinic Networks</div>
-              <div class="component-tag">NS Health Capacity API</div>
+          <div class="pipe-example"><div class="pipe-example-inner">
+            <div class="pipe-example-label">Risk Assessment</div>
+            <div class="pipe-chat">
+              <div class="pipe-msg klara"><span class="msg-label">Classification</span>Score: <b style="color:var(--amber)">45/100 — YELLOW</b><br>Chest tightness + fever = moderate concern. Not emergent, but needs clinical assessment within 24 hours.</div>
+              <div class="pipe-msg klara"><span class="msg-label">Safety Check</span>No red flags detected (no severe pain, no loss of consciousness, no difficulty breathing at rest).</div>
             </div>
-          </div>
+            <div class="pipe-source-text">✓ Protocol: Schmitt-Thompson · ClearTriage</div>
+          </div></div>
         </div>
-      </div>
 
-      <div class="layer-connector">
-        <div class="connector-line"></div>
-        <span class="connector-label">↓ Routed Patients · Intake Packages</span>
-      </div>
-
-      <!-- LAYER 4 -->
-      <div class="layer-card">
-        <div class="layer-header">
-          <div class="layer-num">LAYER 04</div>
-          <div class="layer-title-group">
-            <div class="layer-title">Provincial Health Infrastructure Layer</div>
-            <div class="layer-subtitle">Emergency · Urgent Care · Primary · Pharmacy · Telehealth</div>
+        <div class="pipe-stage" data-delay="450" style="position:relative">
+          <div class="pipe-node">⊕</div>
+          <div class="pipe-content">
+            <div class="pipe-code">Stage 04 · Context</div>
+            <div class="pipe-name">Provincial Context Layer</div>
+            <div class="pipe-desc">Enriches with DIS/SHARE medication data and OPOR history.</div>
           </div>
-          <div class="layer-badge">Care Delivery</div>
-        </div>
-        <div class="layer-body">
-          <div class="layer-description">
-            <p>The Provincial Health Infrastructure Layer represents the physical and virtual care delivery endpoints that KLARA OS routes patients toward. This layer is not managed by KLARA — it is served by KLARA. These are the hospitals, clinics, telehealth platforms, and pharmacies that form Nova Scotia's healthcare system.</p>
-            <p>KLARA's routing intelligence exists specifically to ensure that each of these nodes receives the right patient at the right time — reducing unnecessary emergency department presentations, distributing care demand across primary and urgent care centres, and activating telehealth pathways for patients who do not require in-person attendance.</p>
-            <p>By functioning as a pre-entry navigation system, KLARA reduces the administrative burden on front-line staff, improves throughput at high-pressure facilities, and ensures that citizens without a family physician can still access appropriate, directed care rather than defaulting to emergency services.</p>
-          </div>
-          <div class="components-panel">
-            <div class="components-label">Care Delivery Nodes</div>
-            <div class="components-grid">
-              <div class="component-tag">Emergency Departments</div>
-              <div class="component-tag">Urgent Treatment Centres</div>
-              <div class="component-tag">Primary Care Clinics</div>
-              <div class="component-tag">Pharmacy Prescribing Services</div>
-              <div class="component-tag">Telehealth / Virtual Care</div>
-              <div class="component-tag">Mental Health Access Points</div>
-              <div class="component-tag">Community Health Centres</div>
+          <div class="pipe-example"><div class="pipe-example-inner">
+            <div class="pipe-example-label">Personalized Context</div>
+            <div class="pipe-chat">
+              <div class="pipe-msg klara"><span class="msg-label">DIS/SHARE Query</span>Patient has active prescription for <b>salbutamol inhaler</b> — existing respiratory condition noted. Routing weight adjusted toward clinical assessment.</div>
+              <div class="pipe-msg klara"><span class="msg-label">Demographics</span>Location: Halifax, NS · Age: 34 · Has regular PCP: No (NFPR registered)</div>
             </div>
+            <div class="pipe-source-text">✓ Data: NS DIS/SHARE · OPOR (Oracle Health)</div>
+          </div></div>
+        </div>
+
+        <div class="pipe-stage" data-delay="600" style="position:relative">
+          <div class="pipe-node">⬟</div>
+          <div class="pipe-content">
+            <div class="pipe-code">Stage 05 · Route</div>
+            <div class="pipe-name">Capacity-Aware Routing</div>
+            <div class="pipe-desc">Matches to optimal available service in real-time.</div>
+          </div>
+          <div class="pipe-example"><div class="pipe-example-inner">
+            <div class="pipe-example-label">Service Matching</div>
+            <div class="pipe-chat">
+              <div class="pipe-msg klara"><span class="msg-label">Capacity Scan</span>VirtualCareNS: <b style="color:var(--green)">12 min wait</b><br>Dartmouth UTC: <b>35 min wait</b><br>QEII ED: <b style="color:var(--red)">3.1 hr wait</b><br>Pharmacy: <b>Not appropriate</b> (Yellow case)</div>
+            </div>
+            <div class="pipe-source-text">✓ Feeds: VirtualCareNS · 811 · NSH closures</div>
+          </div></div>
+        </div>
+
+        <div class="pipe-stage" data-delay="750" style="position:relative">
+          <div class="pipe-node">✦</div>
+          <div class="pipe-content">
+            <div class="pipe-code">Stage 06 · Recommend</div>
+            <div class="pipe-name">Care Recommendation</div>
+            <div class="pipe-desc">RAG-powered recommendation with rationale and alternatives.</div>
+          </div>
+          <div class="pipe-example"><div class="pipe-example-inner">
+            <div class="pipe-example-label">Recommendation Delivered</div>
+            <div class="pipe-chat">
+              <div class="pipe-msg klara"><span class="msg-label">KLARA</span>Based on your symptoms, I recommend a <b>Virtual Care consultation</b> — available now with ~12 min wait. Your existing respiratory history means a clinician should assess this today. Want me to connect you?</div>
+              <div class="pipe-msg user"><span class="msg-label">Patient</span>Yes, connect me.</div>
+            </div>
+            <div class="pipe-source-text">✓ RAG accuracy: 96.4% (npj Digital Medicine 2025)</div>
+          </div></div>
+        </div>
+
+        <div class="pipe-stage" data-delay="900" style="position:relative">
+          <div class="pipe-node">≡</div>
+          <div class="pipe-content">
+            <div class="pipe-code">Stage 07 · Output</div>
+            <div class="pipe-name">Structured Intake Output</div>
+            <div class="pipe-desc">FHIR R4 (Fast Healthcare Interoperability Resources) document travels with the patient.</div>
+          </div>
+          <div class="pipe-example"><div class="pipe-example-inner">
+            <div class="pipe-example-label">Clinician Receives</div>
+            <div class="pipe-chat">
+              <div class="pipe-msg klara"><span class="msg-label">FHIR R4 Intake Packet</span><b>Presenting:</b> Pharyngitis + pyrexia + exertional dyspnoea (48h)<br><b>Risk:</b> Yellow 45/100<br><b>Context:</b> Active salbutamol Rx, no PCP<br><b>Routing:</b> VirtualCareNS<br><i>No repeated history-taking needed.</i></div>
+            </div>
+            <div class="pipe-source-text">✓ Standard: HL7 FHIR R4 · CA Core+ v0.3.0</div>
+          </div></div>
+        </div>
+
+        </div>
+        <!-- MIDDLE: Stage Explanation Panel -->
+        <div class="pipeline-mid-panel" id="pipelineMidPanel">
+          <div class="mid-stage-code">Select a Stage</div>
+          <div class="mid-stage-name">Click any pipeline stage</div>
+          <div class="mid-stage-desc">Each stage in the KLARA pipeline adds a layer of intelligence. Click a stage on the left to see its detailed explanation and how it processes real patient data.</div>
+        </div>
+        <!-- RIGHT: Conversation Example Panel -->
+        <div class="pipeline-right-panel" id="pipelineRightPanel">
+          <div class="pipe-example-label">Live Example</div>
+          <div class="pipe-chat" id="pipelineRightChat">
+            <div class="pipe-msg klara"><span class="msg-label">KLARA</span>Select a pipeline stage to see a live conversational example of how KLARA processes patient input at that stage.</div>
           </div>
         </div>
       </div>
-
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- ─── NARRATIVE ─── -->
-  <section class="narrative-section">
-    <div class="narrative-block primary">
-      <h3>Why KLARA Is an Operating System, Not an Application</h3>
-      <p>A typical healthcare application solves one problem for one user type. KLARA OS solves a systemic problem for the entire provincial health system. It functions as an operating system because it orchestrates multiple underlying platforms, manages real-time state across the care network, and serves as the intelligent coordination layer between citizens and healthcare infrastructure.</p>
-      <p>Just as a computer operating system manages the relationship between hardware resources and user requests, KLARA manages the relationship between care capacity and patient demand — ensuring every request is routed to the most appropriate resource at the right time.</p>
-      <p>It is not owned by a single department. It is not a portal. It is not a chatbot. It is provincial health infrastructure.</p>
+<!-- SECTION 4: ARCHITECTURE -->
+<section id="architecture" class="reveal-section">
+  <div class="section-inner">
+    <div class="section-label"><span class="dot"></span> Section 04 — System Architecture</div>
+    <h2 class="section-title">Four layers.<br><em>One operating system.</em></h2>
+    <p class="section-narrative">KLARA OS is not an application — it is a middleware layer that integrates with every major component of Nova Scotia's healthcare infrastructure.</p>
+    <div class="arch-layers" id="archLayers">
+      <div class="arch-layer" data-delay="0">
+        <div class="arch-num">01</div>
+        <div class="arch-info">
+          <div class="arch-name">User Interaction Layer</div>
+          <div class="arch-desc">Patient-facing intake via YourHealthNS app, web portal, or 811 digital pathway.</div>
+          <div class="arch-expand"><div class="arch-expand-inner">
+            <p>Supports app, web, and 811-integrated voice pathways. The voice pathway is critical for rural and elderly demographics — the discontinued MyHealthNS portal (shut down 2020 due to low uptake) is a warning against app-only strategies. YourHealthNS "Nova" AI assistant becomes the primary entry point with structured intake and risk-stratified routing.</p>
+            <div class="arch-tags"><span class="arch-tag">YourHealthNS</span><span class="arch-tag">811 Voice</span><span class="arch-tag">Web Portal</span><span class="arch-tag">Accessibility</span></div>
+          </div></div>
+        </div>
+      </div>
+      <div class="arch-layer" data-delay="200">
+        <div class="arch-num">02</div>
+        <div class="arch-info">
+          <div class="arch-name">Navigation Intelligence Engine</div>
+          <div class="arch-desc">Symptom parsing, risk classification, and RAG-powered clinical reasoning.</div>
+          <div class="arch-expand"><div class="arch-expand-inner">
+            <p>Modular RAG (Retrieval Augmented Generation) architecture — recommended by 2025 evidence as the best combination of accuracy, traceability, and safety for clinical applications. Schmitt-Thompson protocol alignment ensures industry-standard triage logic. SNOMED-CT mapping enables pan-Canadian interoperability. Non-diagnostic constraint is architecturally enforced.</p>
+            <div class="arch-tags"><span class="arch-tag">RAG</span><span class="arch-tag">SNOMED-CT</span><span class="arch-tag">Schmitt-Thompson</span><span class="arch-tag">Non-Diagnostic</span></div>
+          </div></div>
+        </div>
+      </div>
+      <div class="arch-layer" data-delay="400">
+        <div class="arch-num">03</div>
+        <div class="arch-info">
+          <div class="arch-name">Healthcare System Integration Layer</div>
+          <div class="arch-desc">FHIR R4 interoperability with OPOR, VirtualCareNS, Novari, DIS/SHARE, EMRs, AI Scribe.</div>
+          <div class="arch-expand"><div class="arch-expand-inner">
+            <p>Oracle Health (OPOR) provides FHIR R4 APIs, SMART on FHIR app launch, and CDS Hooks — confirmed on the Millennium platform. EMR integration with TELUS Med Access and QHR Accuro via FHIR DocumentReference or Ocean eReferrals. Novari ($17M/5yr) handles downstream referral management — KLARA feeds pre-qualified, structured referrals into Novari eRequest.</p>
+            <div class="arch-tags"><span class="arch-tag">FHIR R4</span><span class="arch-tag">SMART on FHIR</span><span class="arch-tag">OPOR</span><span class="arch-tag">Novari</span><span class="arch-tag">Ocean</span></div>
+          </div></div>
+        </div>
+      </div>
+      <div class="arch-layer" data-delay="600">
+        <div class="arch-num">04</div>
+        <div class="arch-info">
+          <div class="arch-name">Provincial Healthcare Infrastructure</div>
+          <div class="arch-desc">Capacity data feeds, community ED closure status, rural load-balancing.</div>
+          <div class="arch-expand"><div class="arch-expand-inner">
+            <p>The capacity layer is the most challenging — no unified real-time service API exists today. Routing uses weighted scoring: proximity × availability × acuity-match × patient-mobility. Hard constraints: no routing to closed facilities, no exceeding panel caps, mandatory escalation for Red cases. FHIR R4 scheduling resources provide the data model.</p>
+            <div class="arch-tags"><span class="arch-tag">Capacity API</span><span class="arch-tag">Load Balancing</span><span class="arch-tag">Rural SLA</span><span class="arch-tag">Real-Time Feeds</span></div>
+          </div></div>
+        </div>
+      </div>
     </div>
-    <div class="narrative-block secondary">
-      <h3>What KLARA Changes for Nova Scotia</h3>
-      <p>Nova Scotia faces a specific and well-documented access problem: emergency departments absorb non-emergency demand, primary care waitlists are years long, and patients without a family physician have no reliable navigation mechanism.</p>
-      <p>KLARA addresses the root cause — the absence of an intelligent first-contact routing layer — rather than adding capacity to a system already under strain. By intercepting patients before they enter the wrong door, KLARA simultaneously reduces ED overcrowding, improves access equity for unattached patients, and produces structured intake data that improves system planning at the provincial level.</p>
-      <p>The system is built to enhance what Nova Scotia has already invested in — OPOR, VirtualCareNS, EMR platforms — rather than compete with them.</p>
-    </div>
-  </section>
+    <div class="arch-connections"><div class="arch-conn-line">⬡ &nbsp; OPOR · VirtualCareNS · Novari · DIS/SHARE · 811 · EMRs · AI Scribe &nbsp; ⬡</div></div>
+  </div>
+</section>
 
-  <!-- ─── IMPACT ─── -->
-  <section class="impact-section">
-    <div class="section-label">System Design Objectives</div>
-    <h2>What the Architecture Is Built to Deliver</h2>
+<!-- NEW SECTION: ECOSYSTEM ACTIVATION -->
+<section id="ecosystem" class="reveal-section">
+  <div class="ambient-glow" style="background:rgba(79,209,197,.5);top:-80px;left:30%"></div>
+  <div class="section-inner">
+    <div class="section-label"><span class="dot"></span> Section 05 — Ecosystem Activation</div>
+    <h2 class="section-title">The infrastructure <em>exists.</em><br>The delivery doesn't.</h2>
+    <p class="section-narrative">Nova Scotia has invested $365M in OPOR, $17M in Novari, and ongoing funding for VirtualCareNS, Virtual Hallway, and AI Scribe. Walk-in clinics across HRM, pharmacies in every community, and Maple-powered virtual care all serve Nova Scotians daily. These systems work — but none of them solve the upstream problem. No single layer tells a patient in Shelburne whether to drive to Yarmouth Regional, call 811, or visit their local pharmacy. KLARA doesn't replace anything — it activates everything.</p>
+
+    <div class="eco-grid">
+      <div class="eco-card">
+        <div class="eco-icon">⬟</div>
+        <div class="eco-name">OPOR (One Person One Record)</div>
+        <div class="eco-role">$365M · Oracle Health</div>
+        <div class="eco-desc">Province-wide clinical information system replacing 80+ legacy apps. IWK live Dec 2025; Central Zone May 2026.</div>
+        <div class="eco-gap">Gap: No patient-facing intake intelligence. Receives patients without pre-structured data.</div>
+        <div class="eco-klara">+ KLARA: Delivers FHIR R4 structured intake packets so clinicians see organized data on first encounter.</div>
+      </div>
+      <div class="eco-card">
+        <div class="eco-icon">💻</div>
+        <div class="eco-name">VirtualCareNS</div>
+        <div class="eco-role">Maple Platform · 108K registered</div>
+        <div class="eco-desc">Virtual primary care — 150–200 appointments/day. 154,823 visits to March 2024. Turns away 100–150 patients daily.</div>
+        <div class="eco-gap">Gap: No intelligent triage. First-come-first-served. Capacity-constrained.</div>
+        <div class="eco-klara">+ KLARA: Pre-screens patients, routes appropriate cases with structured intake, reduces turn-aways.</div>
+      </div>
+      <div class="eco-card">
+        <div class="eco-icon">🔗</div>
+        <div class="eco-name">Virtual Hallway</div>
+        <div class="eco-role">1,016 providers · 50+ specialties</div>
+        <div class="eco-desc">Provider-to-provider phone consults. 84% negate in-person specialist referral.</div>
+        <div class="eco-gap">Gap: Provider-initiated only. Patients can't trigger it. Not connected to navigation.</div>
+        <div class="eco-klara">+ KLARA: Identifies cases where PCP + Virtual Hallway consult may resolve the issue and flags this pathway.</div>
+      </div>
+      <div class="eco-card">
+        <div class="eco-icon">💊</div>
+        <div class="eco-name">DIS / SHARE</div>
+        <div class="eco-role">Provincial medication system</div>
+        <div class="eco-desc">Province-wide medication profiles from all community pharmacies since 2016. SHARE aggregates hospital, lab, DI data.</div>
+        <div class="eco-gap">Gap: View-only for clinicians. Not connected to navigation decisions. Looked up reactively, not proactively.</div>
+        <div class="eco-klara">+ KLARA: Queries DIS/SHARE to enrich routing — flags complex medication profiles for higher-acuity pathways.</div>
+      </div>
+      <div class="eco-card">
+        <div class="eco-icon">📋</div>
+        <div class="eco-name">Novari</div>
+        <div class="eco-role">$17M/5yr · Referral management</div>
+        <div class="eco-desc">MIRM, eRequest, MHA mental health intake. Province-wide Dec 2025.</div>
+        <div class="eco-gap">Gap: Manages referrals after creation. Doesn't help patients decide whether or where to seek care.</div>
+        <div class="eco-klara">+ KLARA: Feeds pre-qualified structured referrals into Novari eRequest, reducing rejections and rework.</div>
+      </div>
+      <div class="eco-card">
+        <div class="eco-icon">🤖</div>
+        <div class="eco-name">AI Scribe + KLARA</div>
+        <div class="eco-role">End-to-end admin reduction</div>
+        <div class="eco-desc">AI Scribe handles in-encounter documentation (Mikata Health, Infoway-funded). KLARA handles pre-encounter intake.</div>
+        <div class="eco-gap">Gap: AI Scribe only addresses during/after encounter. Pre-encounter intake remains manual and redundant.</div>
+        <div class="eco-klara">+ Combined: KLARA pre-encounter + AI Scribe in-encounter = estimated 30–50% total admin reduction.</div>
+      </div>
+    </div>
+
+    <div class="eco-summary">
+      <div class="eco-summary-title">KLARA is the <em>activation layer.</em></div>
+      <div class="eco-summary-text">The province has built the roads. KLARA is the GPS. Without upstream navigation, OPOR receives disorganized intake, VirtualCareNS turns away patients the ED could serve, and Virtual Hallway remains invisible to those who need it most.</div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 6: IMPACT -->
+<section id="impact" class="reveal-section">
+  <div class="ambient-glow" style="background:rgba(46,204,135,.5);top:-80px;left:50%;transform:translateX(-50%)"></div>
+  <div class="section-inner">
+    <div class="section-label"><span class="dot"></span> Section 06 — System Impact</div>
+    <h2 class="section-title">Measurable value.<br><em>Moderate scenario.</em></h2>
+    <p class="section-narrative">By reducing avoidable emergency visits and improving correct care routing across Nova Scotia, KLARA can help decrease wait times, improve healthcare resource allocation, and expand access to timely care. Even the moderate scenario projects system value that exceeds implementation costs by 3:1 to 5:1.</p>
     <div class="impact-grid">
       <div class="impact-card">
-        <span class="impact-num">↓ ED</span>
-        <div class="impact-label">Reduce unnecessary emergency department presentations</div>
+        <div class="impact-value" data-target="1.5" data-prefix="$" data-suffix="M" data-decimals="1">$0</div>
+        <div class="impact-label">ED Deflection<br>Savings</div>
+        <div class="impact-source"><div class="impact-source-inner"><strong>Source:</strong> 3% of 181,547 CTAS 4–5 visits × $275 cost differential. CIHI 2018–19 (inflation-adjusted); NS Government acuity data.</div></div>
       </div>
       <div class="impact-card">
-        <span class="impact-num">100%</span>
-        <div class="impact-label">Coverage for patients without a family physician</div>
+        <div class="impact-value" data-target="616" data-prefix="$" data-suffix="K" data-decimals="0">$0</div>
+        <div class="impact-label">LWBS Reduction<br>Value</div>
+        <div class="impact-source"><div class="impact-source-inner"><strong>Source:</strong> 10% of 52,521 LWBS patients. 33.5% return within 30 days (PMC 7972384). Each return = $350 ED visit.</div></div>
       </div>
       <div class="impact-card">
-        <span class="impact-num">Real-Time</span>
-        <div class="impact-label">Capacity-aware routing prevents routing to saturated facilities</div>
-      </div>
-      <div class="impact-card">
-        <span class="impact-num">Unified</span>
-        <div class="impact-label">Single navigation intelligence layer across all provincial care types</div>
+        <div class="impact-value" data-target="3.5" data-prefix="$" data-suffix="M" data-decimals="1">$0</div>
+        <div class="impact-label">Clinician Time<br>Recovery</div>
+        <div class="impact-source"><div class="impact-source-inner"><strong>Source:</strong> 5 min/encounter × 561K visits × 20% utilization. Infermedica: 37.5% doc reduction. CheckinAsyst: 10 min saved.</div></div>
       </div>
     </div>
-  </section>
+    <div class="impact-total">
+      <div class="impact-total-label">Estimated Annual System Value · Moderate Scenario</div>
+      <div class="impact-total-value">≈ $<em id="totalValue">0</em>M</div>
+      <div class="impact-total-note">Against $7.3B healthcare budget · ROI 3:1 to 5:1 · Includes $3.1M admin reduction with AI Scribe</div>
+    </div>
 
-  <!-- ─── FOOTER ─── -->
-  <footer>
-    <div class="footer-left">KLARA OS — Architecture Overview v1.0</div>
-    <div class="footer-right"><span class="status-dot"></span>Nova Scotia Health — Navigation Intelligence Platform</div>
-  </footer>
+    <!-- Executive Impact Categories -->
+    <div class="exec-categories" id="execCategories">
+      <div class="exec-cat" data-cat="ed" onclick="showExecDetail('ed')">
+        <div class="exec-cat-icon">🏥</div>
+        <div class="exec-cat-name">Emergency Department Relief</div>
+      </div>
+      <div class="exec-cat" data-cat="workforce" onclick="showExecDetail('workforce')">
+        <div class="exec-cat-icon">👩‍⚕️</div>
+        <div class="exec-cat-name">Workforce Efficiency</div>
+      </div>
+      <div class="exec-cat" data-cat="equity" onclick="showExecDetail('equity')">
+        <div class="exec-cat-icon">⚖️</div>
+        <div class="exec-cat-name">Navigation Equity</div>
+      </div>
+      <div class="exec-cat" data-cat="infra" onclick="showExecDetail('infra')">
+        <div class="exec-cat-icon">⬟</div>
+        <div class="exec-cat-name">Infrastructure Optimization</div>
+      </div>
+    </div>
 
+    <div class="exec-detail" id="exec-ed">
+      <div class="exec-detail-title">Emergency Department Relief</div>
+      <ul class="exec-detail-list">
+        <li>Reducing non-urgent ED visits by routing CTAS 4–5 patients to appropriate alternatives</li>
+        <li>Improving wait times for high-acuity patients who genuinely need emergency care</li>
+        <li>Preserving ED capacity for true emergencies during peak demand periods</li>
+        <li>Reducing LWBS rates by intercepting patients before they enter overcrowded EDs</li>
+      </ul>
+    </div>
+    <div class="exec-detail" id="exec-workforce">
+      <div class="exec-detail-title">Workforce Efficiency</div>
+      <ul class="exec-detail-list">
+        <li>Recovering clinician time through structured pre-encounter intake data</li>
+        <li>Reducing administrative overhead with KLARA + AI Scribe pipeline</li>
+        <li>Allowing staff to focus on complex care instead of redundant history-taking</li>
+        <li>Reducing documentation burden by an estimated 30–50% when combined with AI Scribe</li>
+      </ul>
+    </div>
+    <div class="exec-detail" id="exec-equity">
+      <div class="exec-detail-title">Navigation Equity</div>
+      <ul class="exec-detail-list">
+        <li>Many Nova Scotians — particularly rural and elderly populations — struggle to navigate digital services</li>
+        <li>KLARA provides guided care routing through app, web, and 811 voice pathways</li>
+        <li>Multimodal access ensures no demographic is left behind by app-only solutions</li>
+        <li>Equity monitoring built into audit logs to detect and correct demographic disparities</li>
+      </ul>
+    </div>
+    <div class="exec-detail" id="exec-infra">
+      <div class="exec-detail-title">Infrastructure Optimization</div>
+      <ul class="exec-detail-list">
+        <li>Works with existing infrastructure — OPOR, VirtualCareNS, Novari, DIS/SHARE, 811</li>
+        <li>Improves utilization of pharmacies and virtual care that are currently underused</li>
+        <li>Reduces unnecessary system load by matching patients to the right service first</li>
+        <li>Activates $365M+ in digital health investments that currently lack upstream navigation</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- SECTION 7: TRUST -->
+<section id="trust" class="reveal-section">
+  <div class="section-inner">
+    <div class="section-label"><span class="dot"></span> Section 07 — Trust & Infrastructure</div>
+    <h2 class="section-title">Governance is<br><em>non-negotiable.</em></h2>
+    <p class="section-narrative">KLARA operates under Nova Scotia's PHIA, Canada's PIPEDA, and PIIDPA data residency requirements. Navigation intelligence — not diagnostic authority. Every routing decision is auditable, every emergency override is mandatory, and every byte of Nova Scotian patient data stays on Canadian soil.</p>
+    <div class="trust-grid" id="trustGrid">
+      <div class="trust-tile" data-delay="0"><div class="trust-status"></div><span class="trust-icon">🔒</span><div class="trust-name">PHIA</div><div class="trust-sub">Personal Health Information Act</div><div class="trust-expand"><div class="trust-expand-text">Nova Scotia's PHIA requires mandatory Record of User Activity for any system maintaining personal health information. KLARA operates under a custodian (NS Health) with full breach notification and consent management. PIA required before data access.</div></div></div>
+      <div class="trust-tile" data-delay="120"><div class="trust-status"></div><span class="trust-icon">🛡</span><div class="trust-name">PIPEDA</div><div class="trust-sub">Federal Privacy Legislation</div><div class="trust-expand"><div class="trust-expand-text">Personal Information Protection and Electronic Documents Act — federal privacy alignment. KLARA's PHIA compliance exceeds PIPEDA requirements. Follows principles of consent, limited collection, accuracy, safeguards.</div></div></div>
+      <div class="trust-tile" data-delay="240"><div class="trust-status"></div><span class="trust-icon">⬡</span><div class="trust-name">FHIR R4</div><div class="trust-sub">Healthcare Interoperability</div><div class="trust-expand"><div class="trust-expand-text">Fast Healthcare Interoperability Resources, Release 4 — HL7 international standard. KLARA builds to CA Core+ profile set (v0.3.0), aligned with pan-Canadian interoperability roadmap targeting 2027 completion.</div></div></div>
+      <div class="trust-tile" data-delay="360"><div class="trust-status"></div><span class="trust-icon">🇨🇦</span><div class="trust-name">Data Residency</div><div class="trust-sub">Canadian Infrastructure</div><div class="trust-expand"><div class="trust-expand-text">PIIDPA (Personal Information International Disclosure and Protection Act) restricts international transfer. KLARA is hosted exclusively on Canadian infrastructure. No patient data crosses national boundaries.</div></div></div>
+      <div class="trust-tile" data-delay="480"><div class="trust-status"></div><span class="trust-icon">📋</span><div class="trust-name">Audit Logging</div><div class="trust-sub">Tamper-Evident Logs</div><div class="trust-expand"><div class="trust-expand-text">Every routing decision logged: timestamp, signal weights, confidence scores, RAG retrieval sources, patient actions. Tamper-evident logging exceeds PIPEDA requirements. Full audit trail for health authority administrators.</div></div></div>
+    </div>
+    <div class="confidence-bar-wrap"><div class="confidence-label"><span>System Governance Score</span><span id="confValue">0%</span></div><div class="confidence-track"><div class="confidence-fill" id="confFill"></div></div></div>
+  </div>
+</section>
+
+<!-- SECTION 08: LIVE SYSTEM EXECUTION -->
+<section id="liveSystem" class="reveal-section">
+  <div class="ambient-glow" style="background:rgba(224,176,82,.4);top:20%;right:-120px"></div>
+  <div class="section-inner">
+    <div class="section-label"><span class="dot"></span> Section 08 — Live System Execution</div>
+    <h2 class="section-title">Watch the pipeline<br><em>execute.</em></h2>
+    <p class="section-narrative">This is not a simulation. Enter a patient scenario below and observe how KLARA processes the input through seven pipeline stages — parsing symptoms, classifying risk, enriching with provincial context, scoring pathways, optimizing routing, and generating a FHIR R4 structured output. Every field in the NavigationContext updates in real time.</p>
+
+    <!-- Patient Input Area -->
+    <div class="demo-input-area">
+      <div class="demo-input-wrap">
+        <div class="demo-input-label"><span class="dil-dot"></span> Patient Scenario Input</div>
+        <textarea class="demo-textarea" id="demoInput" placeholder="Describe patient symptoms, e.g. 'I've had a sore throat and mild fever for two days. My chest feels a bit tight when I breathe deeply.'"></textarea>
+        <div class="demo-presets">
+          <button class="demo-preset" data-scenario="pharyngitis">Sore throat + fever + chest tightness</button>
+          <button class="demo-preset" data-scenario="uti">Burning urination for 3 days</button>
+          <button class="demo-preset" data-scenario="ankle">Twisted ankle, swelling, can bear weight</button>
+          <button class="demo-preset" data-scenario="chest_pain">Sudden chest pain, shortness of breath</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Execution Panel -->
+    <div class="system-execution">
+      <div class="exec-panel">
+        <div class="exec-header">
+          <div class="exec-header-left">
+            <div class="exec-status-dot" id="execStatusDot"></div>
+            <div>
+              <div class="exec-header-title">KLARA Middleware Engine</div>
+              <div class="exec-header-sub" id="execSessionId">SESSION: AWAITING INPUT</div>
+            </div>
+          </div>
+          <div>
+            <button class="exec-btn" id="execRunBtn" onclick="KLARAEngine.run()">◎ &nbsp; Execute Pipeline</button>
+            <button class="exec-btn-reset" id="execResetBtn" onclick="KLARAEngine.reset()">Reset</button>
+          </div>
+        </div>
+        <div class="exec-body">
+          <!-- LEFT: NavigationContext State -->
+          <div class="ctx-panel">
+            <div class="ctx-title"><span class="ctx-dot"></span> NavigationContext</div>
+            <div id="ctxFields">
+              <div class="ctx-field"><div class="ctx-field-key">session_id</div><div class="ctx-field-val empty" id="ctx-session">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">patient_input</div><div class="ctx-field-val empty" id="ctx-input">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">structured_symptoms</div><div class="ctx-field-val empty" id="ctx-symptoms">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">risk_classification</div><div class="ctx-field-val empty" id="ctx-risk">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">clinical_flags</div><div class="ctx-field-val empty" id="ctx-flags">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">location</div><div class="ctx-field-val empty" id="ctx-location">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">service_availability</div><div class="ctx-field-val empty" id="ctx-services">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">capacity_data</div><div class="ctx-field-val empty" id="ctx-capacity">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">routing_scores</div><div class="ctx-field-val empty" id="ctx-routing">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">optimization_result</div><div class="ctx-field-val empty" id="ctx-optresult">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">recommendation</div><div class="ctx-field-val empty" id="ctx-rec">—</div></div>
+              <div class="ctx-field"><div class="ctx-field-key">output_document</div><div class="ctx-field-val empty" id="ctx-output">—</div></div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Pipeline Progress + Results -->
+          <div class="results-panel">
+            <div class="pipeline-progress" id="pipelineProgress">
+              <div class="progress-stage" id="ps-intake"><div class="progress-node" id="pn-intake">1</div><div class="progress-info"><div class="progress-name">Intake Processing</div></div><div class="progress-time" id="pt-intake">—</div></div>
+              <div class="progress-stage" id="ps-risk"><div class="progress-node" id="pn-risk">2</div><div class="progress-info"><div class="progress-name">Risk Classification</div></div><div class="progress-time" id="pt-risk">—</div></div>
+              <div class="progress-stage" id="ps-context"><div class="progress-node" id="pn-context">3</div><div class="progress-info"><div class="progress-name">Context Enrichment</div></div><div class="progress-time" id="pt-context">—</div></div>
+              <div class="progress-stage" id="ps-routing"><div class="progress-node" id="pn-routing">4</div><div class="progress-info"><div class="progress-name">Capacity-Aware Routing</div></div><div class="progress-time" id="pt-routing">—</div></div>
+              <div class="progress-stage" id="ps-optimize"><div class="progress-node" id="pn-optimize">5</div><div class="progress-info"><div class="progress-name">Optimization Engine</div></div><div class="progress-time" id="pt-optimize">—</div></div>
+              <div class="progress-stage" id="ps-recommend"><div class="progress-node" id="pn-recommend">6</div><div class="progress-info"><div class="progress-name">Care Recommendation</div></div><div class="progress-time" id="pt-recommend">—</div></div>
+              <div class="progress-stage" id="ps-output"><div class="progress-node" id="pn-output">7</div><div class="progress-info"><div class="progress-name">FHIR Output Generation</div></div><div class="progress-time" id="pt-output">—</div></div>
+            </div>
+
+            <!-- Optimization Results (hidden until stage completes) -->
+            <div class="opt-results" id="optResults">
+              <div class="opt-title"><span class="opt-icon">⬟</span> Prescriptive Optimization Results</div>
+              <div class="opt-pathways" id="optPathways"></div>
+              <div class="opt-objective">
+                <div class="opt-objective-label">System strain objective</div>
+                <div class="opt-objective-val" id="optObjective">—</div>
+              </div>
+            </div>
+
+            <!-- FHIR Output Viewer (hidden until stage completes) -->
+            <div class="fhir-viewer" id="fhirViewer">
+              <div class="fhir-header">
+                <div class="fhir-header-left">
+                  <span class="fhir-badge">FHIR R4</span>
+                  <span class="fhir-header-title">Structured Intake Document</span>
+                </div>
+              </div>
+              <div class="fhir-body"><div class="fhir-json" id="fhirJson"></div></div>
+              <div class="fhir-footer">
+                <span class="fhir-footer-text">HL7 FHIR R4 · CA Core+ v0.3.0</span>
+                <button class="fhir-copy-btn" onclick="KLARAEngine.copyFHIR()">Copy Bundle</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CANCELLATION REROUTING NOTIFICATION (floating) -->
+<div class="cancel-notification" id="cancelNotification">
+  <div class="cancel-header">
+    <div class="cancel-icon">⟳</div>
+    <div class="cancel-title">Appointment Rerouted</div>
+  </div>
+  <div class="cancel-body" id="cancelBody">
+    Your scheduled <strong>VirtualCareNS</strong> appointment was cancelled due to provider unavailability. KLARA has identified an alternative care pathway: <strong>Dartmouth Walk-in Clinic</strong> — current wait time 22 minutes, 4.2 km from your location.
+  </div>
+  <div class="cancel-actions">
+    <button class="cancel-accept" onclick="KLARAEngine.acceptReroute()">Accept New Pathway</button>
+    <button class="cancel-dismiss" onclick="KLARAEngine.dismissCancel()">Dismiss</button>
+  </div>
 </div>
+
+<!-- TELEMETRY STATUS BAR -->
+<div class="telemetry-bar" id="telemetryBar">
+  <div class="telem-left">
+    <div class="telem-item"><span class="telem-dot green"></span> KLARA v2.4.1</div>
+    <div class="telem-item"><span class="telem-dot gold"></span> Sessions: <span id="telemSessions">0</span></div>
+    <div class="telem-item"><span class="telem-dot teal"></span> Pathways Assigned: <span id="telemPathways">0</span></div>
+    <div class="telem-item">Avg Latency: <span id="telemLatency">—</span></div>
+  </div>
+  <div class="telem-right">
+    <span>Telemetry → Tableau</span>
+    <button class="telem-toggle" onclick="KLARAEngine.toggleTelemetry()">Hide</button>
+  </div>
+</div>
+
+<!-- CLOSING -->
+<section id="closing" class="reveal-section">
+  <div class="section-inner" style="text-align:center">
+    <div class="section-label" style="justify-content:center"><span class="dot"></span> What Comes Next</div>
+    <h2 class="section-title" style="text-align:center">The gap is <em>navigable.</em></h2>
+    <p class="section-narrative" style="margin:0 auto 20px;text-align:center;max-width:600px">Approximately 60,000 Nova Scotians are without a family doctor. Walk-in clinics and virtual care run at capacity. Emergency departments absorb what the system can't route. Nova Scotia has the infrastructure and the investment — $365M in OPOR, $17M in Novari, ongoing funding for VirtualCareNS. KLARA is the activation layer that connects these investments to the patient in Shelburne, Dartmouth, or Cape Breton who doesn't know where to go.</p>
+    <div class="closing-buttons">
+      <button class="closing-cta" onclick="window.scrollTo({top:0,behavior:'smooth'})">◎ &nbsp; Return to the Beginning</button>
+      <button class="closing-cta-secondary" onclick="downloadPDF()">↓ &nbsp; Download Evidence Report (PDF)</button>
+      <a class="closing-cta-tableau" href="https://public.tableau.com" target="_blank" rel="noopener">📊 &nbsp; View Tableau Dashboard</a>
+    </div>
+  </div>
+</section>
+
+<!-- CITATIONS -->
+<div class="citations-section">
+  <div class="citations-title"><span class="dot"></span> Data Sources & Citations</div>
+  <div class="citation-group">
+    <div class="citation-group-label">Provincial Government Data</div>
+    <div class="citation-item"><span class="ci-num">1</span><span>Nova Scotia Government — Emergency Department Accountability Report 2023–24. ED visits, LWBS rates, closure hours, acuity distribution, wait times.</span></div>
+    <div class="citation-item"><span class="ci-num">2</span><span>Nova Scotia Health — Need a Family Practice Registry (NFPR) Updates, 2024–2026. Unattached patient counts and registry validation.</span></div>
+    <div class="citation-item"><span class="ci-num">3</span><span>Nova Scotia Budget 2024–25; 2026–27 Estimates. Healthcare budget ($7.3B), digital tool allocations ($9.6M), 811 improvement ($3.2M).</span></div>
+    <div class="citation-item"><span class="ci-num">4</span><span>Government of Nova Scotia — OPOR Program. Oracle Health contract ($365M/10yr), rollout timeline (IWK Dec 2025, Central Zone May 2026).</span></div>
+  </div>
+  <div class="citation-group">
+    <div class="citation-group-label">National Health Data (CIHI & Federal)</div>
+    <div class="citation-item"><span class="ci-num">5</span><span>Canadian Institute for Health Information (CIHI) — National ED visit rate benchmarks (495/1,000 population, 2018–19). Primary and Virtual Care Access Report, December 2024.</span></div>
+    <div class="citation-item"><span class="ci-num">6</span><span>CIHI Physician billing data — Primary care visit cost ($56–$90 CAD). ED full cost estimates ($350–$385 CAD, inflation-adjusted).</span></div>
+    <div class="citation-item"><span class="ci-num">7</span><span>Health Canada — Software as a Medical Device (SaMD) Guidance, December 2019. Four exclusion criteria for non-SaMD classification.</span></div>
+  </div>
+  <div class="citation-group">
+    <div class="citation-group-label">Peer-Reviewed Research</div>
+    <div class="citation-item"><span class="ci-num">8</span><span>McNaughton et al., 2024, JACEP Open — LWBS rates and clinical outcomes in Canadian emergency departments.</span></div>
+    <div class="citation-item"><span class="ci-num">9</span><span>PMC 11655912 — 2024 Ontario study: LWBS patients face 14% higher risk of 7-day death or hospitalization vs. patients seen.</span></div>
+    <div class="citation-item"><span class="ci-num">10</span><span>PMC 7972384 — LWBS return rates: 33.5% return within 30 days; 11.5–23.2% require admission on return.</span></div>
+    <div class="citation-item"><span class="ci-num">11</span><span>Smith et al., 2024, CJCMH — Centralized intake reduced mental health assessment wait times by 60%.</span></div>
+    <div class="citation-item"><span class="ci-num">12</span><span>npj Digital Medicine, 2025 — GPT-4 with RAG achieving 96.4% accuracy with zero hallucinations in structured clinical assessment.</span></div>
+    <div class="citation-item"><span class="ci-num">13</span><span>AHRQ — Black patients face 20% greater odds of mis-triage in ED settings. Equity monitoring requirement for ML-assisted systems.</span></div>
+  </div>
+  <div class="citation-group">
+    <div class="citation-group-label">Provincial Digital Health Systems</div>
+    <div class="citation-item"><span class="ci-num">14</span><span>Nova Scotia Health — VirtualCareNS (Maple platform). 108,000 registered; 154,823 visits to March 2024; 150–200 appointments/day.</span></div>
+    <div class="citation-item"><span class="ci-num">15</span><span>Virtual Hallway — Provider-to-provider synchronous consults. 1,016 providers; 50+ specialties; 84% negate in-person referral.</span></div>
+    <div class="citation-item"><span class="ci-num">16</span><span>Novari Health — MIRM, eRequest, MHA intake. $17M/5yr contract. Province-wide Dec 2025.</span></div>
+    <div class="citation-item"><span class="ci-num">17</span><span>Nova Scotia DIS/SHARE — Province-wide medication profiles (all community pharmacies since 2016). Clinical data aggregation portal.</span></div>
+    <div class="citation-item"><span class="ci-num">18</span><span>AI Scribe Pilot (Mikata Health / Mika) — Canada Health Infoway funded. Free licenses to primary care clinicians.</span></div>
+  </div>
+  <div class="citation-group">
+    <div class="citation-group-label">Industry & Standards</div>
+    <div class="citation-item"><span class="ci-num">19</span><span>HL7 FHIR R4 — Fast Healthcare Interoperability Resources. CA Core+ profile set v0.3.0 (pan-Canadian roadmap, 2027 target).</span></div>
+    <div class="citation-item"><span class="ci-num">20</span><span>Oracle Health Developer Program — SMART on FHIR, CDS Hooks, Millennium platform integration pathway.</span></div>
+    <div class="citation-item"><span class="ci-num">21</span><span>Infermedica — 37.5% reduction in per-encounter documentation time with AI-powered structured intake.</span></div>
+    <div class="citation-item"><span class="ci-num">22</span><span>CheckinAsyst — 10 minutes saved per patient from eliminating manual intake data entry.</span></div>
+    <div class="citation-item"><span class="ci-num">23</span><span>CMHA — State of Mental Health in Canada 2024. NS mental health spend: 4.9% ($359.6M) vs. national 6.3%.</span></div>
+    <div class="citation-item"><span class="ci-num">24</span><span>Montreal Economic Institute, 2025 — LWBS patient outcomes and healthcare system costs analysis.</span></div>
+  </div>
+</div>
+
+<footer class="reveal-footer">
+  <strong>KLARA OS</strong> · Navigation Intelligence for Nova Scotia<br>
+  This is a navigation system. It does not diagnose medical conditions. For emergencies, call 911.<br>
+  <span style="font-family:var(--font-mono);font-size:10px;margin-top:8px;display:inline-block">v2.4.1 · SYSTEM REVEAL · © 2025</span>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+  const pf=document.getElementById('progressFill');
+  function updateProgress(){const s=window.scrollY,d=document.documentElement.scrollHeight-window.innerHeight;pf.style.width=(d>0?(s/d)*100:0)+'%'}
+  const navDots=document.querySelectorAll('.nav-dot'),sIds=Array.from(navDots).map(d=>d.dataset.target);
+  navDots.forEach(d=>{d.addEventListener('click',()=>{const t=document.getElementById(d.dataset.target);if(t)t.scrollIntoView({behavior:'smooth'})})});
+  function updateNav(){const sp=window.scrollY+window.innerHeight/2;let ai=0;sIds.forEach((id,i)=>{const el=document.getElementById(id);if(el&&el.offsetTop<=sp)ai=i});navDots.forEach((d,i)=>d.classList.toggle('active',i===ai))}
+  const ro=new IntersectionObserver(e=>{e.forEach(en=>{if(en.isIntersecting)en.target.classList.add('in-view')})},{threshold:.12});
+  document.querySelectorAll('.reveal-section').forEach(s=>ro.observe(s));
+
+  let ca=false;const co=new IntersectionObserver(e=>{e.forEach(en=>{if(en.isIntersecting&&!ca){ca=true;document.querySelectorAll('.crisis-value').forEach((el,i)=>{setTimeout(()=>{aV(el,0,parseInt(el.dataset.target),1800,el.dataset.prefix||'',el.dataset.suffix||'')},i*200)})}})},{threshold:.3});
+  const cs=document.getElementById('crisis');if(cs)co.observe(cs);
+  function aV(el,f,t,d,p,s){const st=performance.now();(function u(tm){const pr=Math.min((tm-st)/d,1),e=1-Math.pow(1-pr,3);el.textContent=p+Math.round(f+(t-f)*e).toLocaleString()+s;if(pr<1)requestAnimationFrame(u)})(performance.now())}
+
+  let pa=false;const po=new IntersectionObserver(e=>{e.forEach(en=>{if(en.isIntersecting&&!pa){pa=true;const stages=document.querySelectorAll('.pipe-stage');stages.forEach((s,i)=>{const dl=parseInt(s.dataset.delay)||i*150;setTimeout(()=>{s.classList.add('pipe-active');if(i<stages.length-1)setTimeout(()=>{s.classList.remove('pipe-active');s.classList.add('pipe-complete')},500)},dl+600)})}})},{threshold:.1});
+  const is=document.getElementById('interception');if(is)po.observe(is);
+
+  let aa=false;const ao=new IntersectionObserver(e=>{e.forEach(en=>{if(en.isIntersecting&&!aa){aa=true;document.querySelectorAll('.arch-layer').forEach((l,i)=>{setTimeout(()=>l.classList.add('arch-visible'),(parseInt(l.dataset.delay)||i*200)+500)})}})},{threshold:.15});
+  const as=document.getElementById('architecture');if(as)ao.observe(as);
+
+  let ia=false;const io=new IntersectionObserver(e=>{e.forEach(en=>{if(en.isIntersecting&&!ia){ia=true;document.querySelectorAll('.impact-value').forEach((el,i)=>{const t=parseFloat(el.dataset.target),s=el.dataset.suffix||'',p=el.dataset.prefix||'',dc=parseInt(el.dataset.decimals)||0;setTimeout(()=>aF(el,0,t,1600,p,s,dc),i*250)});setTimeout(()=>aF(document.getElementById('totalValue'),0,8.7,2000,'','',1),1000)}})},{threshold:.2});
+  const ims=document.getElementById('impact');if(ims)io.observe(ims);
+  function aF(el,f,t,d,p,s,dc){const st=performance.now();(function u(tm){const pr=Math.min((tm-st)/d,1),e=1-Math.pow(1-pr,3);el.textContent=p+(f+(t-f)*e).toFixed(dc)+s;if(pr<1)requestAnimationFrame(u)})(performance.now())}
+
+  let ta=false;const to2=new IntersectionObserver(e=>{e.forEach(en=>{if(en.isIntersecting&&!ta){ta=true;document.querySelectorAll('.trust-tile').forEach((t,i)=>{setTimeout(()=>t.classList.add('trust-visible'),(parseInt(t.dataset.delay)||i*120)+400)});setTimeout(()=>{document.getElementById('confFill').style.width='94%';aF(document.getElementById('confValue'),0,94,2000,'','%',0)},1200)}})},{threshold:.15});
+  const ts=document.getElementById('trust');if(ts)to2.observe(ts);
+
+  let tk=false;
+  window.addEventListener('scroll',()=>{if(!tk){requestAnimationFrame(()=>{updateProgress();updateNav();tk=false});tk=true}});
+  updateProgress();updateNav();
+
+  /* PIPELINE CLICK INTERACTION */
+  const stageData=[
+    {code:'Stage 01 · Input',name:'Patient Input',desc:'Multimodal intake via YourHealthNS app, web portal, or 811 digital front-end. Captures presenting complaint, symptom duration/severity, relevant medical history (with consent-based DIS/SHARE query), demographic context (location, age, mobility), and patient preferences.',source:'✓ Intake spec: KLARA Architecture Document §Stage 1'},
+    {code:'Stage 02 · Parse',name:'Symptom Parsing',desc:'NLP (Natural Language Processing) converts free-text symptoms into structured clinical concepts mapped to SNOMED-CT (Systematized Nomenclature of Medicine — Clinical Terms), aligned with pan-Canadian CACDI standards. This is information structuring, not diagnosis — analogous to what a triage nurse documents.',source:'✓ Standard: SNOMED-CT · CACDI pan-Canadian interoperability'},
+    {code:'Stage 03 · Classify',name:'Risk Classification',desc:'Green (self-care/pharmacy/virtual) · Yellow (clinical assessment needed) · Red (emergency — direct to ED/911). Rules-based with ML-assisted pattern recognition using validated Schmitt-Thompson nurse triage protocols. Maps to service-level routing, not clinical conditions.',source:'✓ Protocol: Schmitt-Thompson · ClearTriage'},
+    {code:'Stage 04 · Context',name:'Provincial Context Layer',desc:'Enriches routing with patient-specific data from DIS/SHARE (Drug Information System / Shared Health Access Record Environment) medication profiles, OPOR (One Person One Record) encounter history, and demographic context. Generic routing becomes personalized navigation.',source:'✓ Data: NS DIS/SHARE · OPOR (Oracle Health Millennium)'},
+    {code:'Stage 05 · Route',name:'Capacity-Aware Routing',desc:'Matches the risk-classified, context-enriched case to the optimal available service using real-time data feeds from VirtualCareNS (150–200 slots/day), 811 queue depth, walk-in/UTC hours, pharmacy availability, and community ED open/closed status.',source:'✓ Feeds: VirtualCareNS · 811 · NSH closure notices · Novari'},
+    {code:'Stage 06 · Recommend',name:'Care Recommendation',desc:'Transparent recommendation with rationale, ranked alternatives, and confidence score. RAG (Retrieval Augmented Generation) provides evidence-grounded explanations from curated provincial clinical pathways. Always includes emergency fallback guidance.',source:'✓ Evidence: npj Digital Medicine 2025 — 96.4% RAG accuracy'},
+    {code:'Stage 07 · Output',name:'Structured Intake Output',desc:'Generates a FHIR R4 (Fast Healthcare Interoperability Resources, Release 4) compliant intake document containing structured symptom data, risk classification rationale, and routing recommendation. This packet travels with the patient — no repeated history-taking at their destination.',source:'✓ Standard: HL7 FHIR R4 · CA Core+ profile set v0.3.0'}
+  ];
+
+  document.querySelectorAll('.pipe-stage').forEach((stage,i)=>{
+    stage.addEventListener('click',()=>{
+      // Update selected state
+      document.querySelectorAll('.pipe-stage').forEach(s=>s.classList.remove('pipe-selected'));
+      stage.classList.add('pipe-selected');
+      // Update middle panel
+      const mp=document.getElementById('pipelineMidPanel');
+      mp.classList.add('mid-active');
+      mp.innerHTML='<div class="mid-stage-code">'+stageData[i].code+'</div><div class="mid-stage-name">'+stageData[i].name+'</div><div class="mid-stage-desc">'+stageData[i].desc+'</div><div class="mid-stage-source">'+stageData[i].source+'</div>';
+      // Update right panel — show the example from this stage
+      const ex=stage.querySelector('.pipe-example-inner');
+      if(ex){
+        document.getElementById('pipelineRightPanel').innerHTML=ex.outerHTML;
+      }
+    });
+  });
+
+})();
+
+/* EXECUTIVE DETAIL TOGGLE */
+function showExecDetail(cat){
+  document.querySelectorAll('.exec-cat').forEach(c=>c.classList.remove('exec-active'));
+  document.querySelectorAll('.exec-detail').forEach(d=>d.classList.remove('exec-detail-visible'));
+  const catEl=document.querySelector('.exec-cat[data-cat="'+cat+'"]');
+  const detEl=document.getElementById('exec-'+cat);
+  if(catEl)catEl.classList.add('exec-active');
+  if(detEl)detEl.classList.add('exec-detail-visible');
+}
+
+function downloadPDF(){
+  const pdfData='JVBERi0xLjQKJZOMi54gUmVwb3J0TGFiIEdlbmVyYXRlZCBQREYgZG9jdW1lbnQgKG9wZW5zb3VyY2UpCjEgMCBvYmoKPDwKL0YxIDIgMCBSIC9GMiAzIDAgUiAvRjMgNSAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL0Jhc2VGb250IC9IZWx2ZXRpY2EgL0VuY29kaW5nIC9XaW5BbnNpRW5jb2RpbmcgL05hbWUgL0YxIC9TdWJ0eXBlIC9UeXBlMSAvVHlwZSAvRm9udAo+PgplbmRvYmoKMyAwIG9iago8PAovQmFzZUZvbnQgL0hlbHZldGljYS1Cb2xkIC9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nIC9OYW1lIC9GMiAvU3VidHlwZSAvVHlwZTEgL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjQgMCBvYmoKPDwKL0NvbnRlbnRzIDE0IDAgUiAvTWVkaWFCb3ggWyAwIDAgNjEyIDc5MiBdIC9QYXJlbnQgMTMgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjUgMCBvYmoKPDwKL0Jhc2VGb250IC9IZWx2ZXRpY2EtT2JsaXF1ZSAvRW5jb2RpbmcgL1dpbkFuc2lFbmNvZGluZyAvTmFtZSAvRjMgL1N1YnR5cGUgL1R5cGUxIC9UeXBlIC9Gb250Cj4+CmVuZG9iago2IDAgb2JqCjw8Ci9Db250ZW50cyAxNSAwIFIgL01lZGlhQm94IFsgMCAwIDYxMiA3OTIgXSAvUGFyZW50IDEzIDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iago3IDAgb2JqCjw8Ci9Db250ZW50cyAxNiAwIFIgL01lZGlhQm94IFsgMCAwIDYxMiA3OTIgXSAvUGFyZW50IDEzIDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iago4IDAgb2JqCjw8Ci9Db250ZW50cyAxNyAwIFIgL01lZGlhQm94IFsgMCAwIDYxMiA3OTIgXSAvUGFyZW50IDEzIDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iago5IDAgb2JqCjw8Ci9Db250ZW50cyAxOCAwIFIgL01lZGlhQm94IFsgMCAwIDYxMiA3OTIgXSAvUGFyZW50IDEzIDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iagoxMCAwIG9iago8PAovQ29udGVudHMgMTkgMCBSIC9NZWRpYUJveCBbIDAgMCA2MTIgNzkyIF0gL1BhcmVudCAxMyAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKMTEgMCBvYmoKPDwKL1BhZ2VNb2RlIC9Vc2VOb25lIC9QYWdlcyAxMyAwIFIgL1R5cGUgL0NhdGFsb2cKPj4KZW5kb2JqCjEyIDAgb2JqCjw8Ci9BdXRob3IgKFwoYW5vbnltb3VzXCkpIC9DcmVhdGlvbkRhdGUgKEQ6MjAyNjAzMDUxNTM1MzErMDAnMDAnKSAvQ3JlYXRvciAoXCh1bnNwZWNpZmllZFwpKSAvS2V5d29yZHMgKCkgL01vZERhdGUgKEQ6MjAyNjAzMDUxNTM1MzErMDAnMDAnKSAvUHJvZHVjZXIgKFJlcG9ydExhYiBQREYgTGlicmFyeSAtIFwob3BlbnNvdXJjZVwpKSAKICAvU3ViamVjdCAoXCh1bnNwZWNpZmllZFwpKSAvVGl0bGUgKFwoYW5vbnltb3VzXCkpIC9UcmFwcGVkIC9GYWxzZQo+PgplbmRvYmoKMTMgMCBvYmoKPDwKL0NvdW50IDYgL0tpZHMgWyA0IDAgUiA2IDAgUiA3IDAgUiA4IDAgUiA5IDAgUiAxMCAwIFIgXSAvVHlwZSAvUGFnZXMKPj4KZW5kb2JqCjE0IDAgb2JqCjw8Ci9GaWx0ZXIgWyAvQVNDSUk4NURlY29kZSAvRmxhdGVEZWNvZGUgXSAvTGVuZ3RoIDY5MQo+PgpzdHJlYW0KR2F0PSdnTiZjOydSXSdvcDhSKHEtPChUWmxwa11ZW1Y4WWZaJEZRTyQ0PGBMYDtwajtzMVNgQmxWIWFpVlQsOmZrZCNQWShDaW5ObiI0UyM+WSJTZUtuQmIkY2YhNjpNIWYzcTNBMW0iWFVJTnQrOnNeJTQtLVQxOVFdcURhNXI3VSFmay9YQiY1cUs6KiJyRUlvM0JUVyQiVjMzZnRQPWtRI2xGXEQuSSo1IltPKkVBcS9zRVBNRi1rVm81M1wycCQpRWZbRFxwZ1o7cTNDLi1xKSIvVVg/K1FgZklQPz89JFhfPnRVclUwMVF0I1xeWDUlPGxXXHJxPTI2IW1ZLldKWnJTYF8/TUFaWURJNyM3PmAsbFFLKkMsQSteXFNcRSMwV2pCWj08Ni49WG5VbzZUR3IrWD8mZkJNaGpsXHMvXFg4V15UVy5yNmFyNyVhN0E1SDtJIj1iKFpWJlIhbFAmbiZpaHA8bnVzOD9TUXFxRj4tQ0pQIk9DKS1ILj1BcWoycjlvUjdXQjwzPGxUViooKl9BZzQrN2hLKWFoTWpNT2NXLGU7Y1JtUT89S2AoXDRLa3BEX15lWixZOjp1LUVFUj9sRyZgcVA+M0Aha2cyLkc5RENuU3VWP01SZE85SENmbipaUW4wbUg2QFtkaScsPVVWJlJZSSw6I2FUUU9XIjlGQ0pdVzBzOFs7RjxoZzdWZzdLVUtOZWk1NWJVOzJAI2giTFgwJk81MU0nRWJDSiwzaD4sPW1IXmZMPzA9XCFJQjFKTFxnOiJfb1ZEZCZRR2UvI2VVcTVgYGtdYG1maWNkVHJGaEEnJz5DISw5KkktXE1NVlxjUnFIP3NUUiEzY0ZdSHAjYC1eWCdnWS1rPEB1Vjk7Wik/S2RePUBUTEo2Sm0oLUQjTmxWNzlnSDJ+PmVuZHN0cmVhbQplbmRvYmoKMTUgMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggMjE2Ngo+PgpzdHJlYW0KR2F0bTw5N1BZVCZBUkMsYlUoJCM+SmFTNyItXTxTcUZLPW45YHMtVkVgJFdSQzJNV1NiPjxOO2NiOlhXKF1qX1ZdN0Q1TkFCaT5KKmglaWozOz1mbkRqMT05VCJsSDojUzc/LC4xaV1HXztsTms6LzpkUCtuYS1SaGtTT0dBaW0waExkTUBJSl4kJm9nXTdSOTQkY29DaT8jY1s3RXVUPD9vVikicGlhWT5kTlhuNSZAZVhGJiFLIy9UYjwmLT9HUFZQOVJccHA1Ti1mVkkqYEM9blU0JS0/aVc/XnFBcnJfY1IhSVk6VixGU0dIRzJGUHMzPislKXUvQSJvR0VQOT9uLzVPLW5wRyZPaj5caSpjZC0hS0c3b0paQ1tzaFYnKGRXaDNRKjdWR3NDZjtYXkU2IVIhUyVXdFlJSjlrTEdOLz1IO2MrJl41JkcpREBTVDpcO1Fub1UtNDlkLWBKKEtRaC5NZTJIJ2VIWWQ5Sz9XXj1KLStHZD1uRkRGIXQoQ2ssRjBmKUteWGs3RHM7RiRIUCJIWz8qMmspKS5HRDExaXVdOTBmZTpRbmRvdS4yLDowRy1PNW9SNVU0XlMxN1FRPENZXClNWVU0PjZNRlpiS1JRRUFENk5bX0dncE8jVkROVykrYT85WUI/MTMlOjRHTG0lSm5WcFNhMl5FVVZtZTRSdS45LE81SmRWPjc6VjMrKnQwJUhHZ0hKIk1WPzRuPGZoQEohKG1DX0BfN1VeOm0raiJoWCVeaW9dVztEckYwMFEiZGJdKiduIkBVUjlVPUBPcCJzTi0zR0xIZnAtIVs+RE45XTE8S0BHJDQ7M2JgXCxSXW9gZVZCJW85cTxPQkhjWignPTthQUdiN1s2LGUoJDFHP0FsOWJYSVNeSTNGP0diNlpPN3Q7ZkBdXk9DIVUxNUBFITEka0VBV0ZFZm4oX2dOZyxaTmE3RSFoWFRTU1smJmFAaWAsSFBnMCNsaDteJkE1PWJpRG9AbnEoYnE+O1EpMUtWW3BcSTNgdDZkbUdyLUdZUl1tSjYtSGZGOGI0bihfa0gzMTJkUUlSWVdwZExSb11EOlYvZTpPQ1MsQSk9SyE3Uk1JJiozKydLcjFoLFFfWHR1UFEmIygpc1pJSlxDMTlGXDlhLjBeVkdtblJiJ2EzP0EmMD07QURhUm80Qm49W0RnVWYoYz9rdVtbI1pKS3FGQXNTWlpHUFxSMzxtMWVdL0c0ZWdsYVAiTzhlaztAOyw+Qj9bJmhQQ1cjNj9QN203YEBtK1M5UllaXShkTzEjVHJwYypCa25FSipeKWsuSTA4bFRbRks4Tlg9TmswcEtKaiQ2SyRDZVNGaCxYMSwzSjEjMi88WzkxTHBbYDBNTCpPS0Q/VjUocDcuTVRDJi4hK0MzJC1ZViwrUEEnY15KSkdRMlslOE1JO1RIZ15SUnNLS0I4LjxxKEVkMl9QS2BGXFghMFpfU0FrTVkicjtDcmkkTnA+IUBKPipCcmhTX3BaNzNxcS9KUj4iSlsmTCdsOEBiUE1SMF5nSEZjbWQkO2VFbkdLaFRRaEtmcSpSVDZHdW9kXGZVWC8rXUkyWSthQ2JdImRXPUdtTUVQLlwxRkReMSU/YFIpIixpZVFfIixIJi0tQkwnSS0wNjpGJklYOCIvbyNQLGY4Mzg1VkJDMix1MkZGKSkrSytvNF03JE1bWz9eMCdsMERTIiQpRyQpKDNPO1heLEYtcDwyXkxsbFZxRkUqV2hJbVtXL2F0IUxeZUFqUV1HL0wjPlZaPVAvNDBvTyk/R0EqY1lbM0YjbiheTU4wLD5pMG5aIUosK21LW0hZT0lGJUkiKGlFUF5tUUs2Z0oha0E3ckBpRSVpV249NzNEVHUxamNVdV9mKyV1VWMqVTxUZkBZNEFFRCIlPyhoVFYjKSZgaG5pSCE1L2JyPm1paG5cVUk9WD5iJVFBSWVENjE5SUFxTC05c2M0MDFuckxlNC1xTCxUTFhbMj1ZUEBdXUYsRidqIz5hVik2Y2RyUmRrZCZbXmtbPEZeZHFFLVRma05xc1YzYFFLZGtIIzFnbjA7Syx0aXN1I2RaI2stc1ckQCxpWFJnSlVLQ3AqMENNVmFdPnE0Zl8iO2Y5ak5Na0IsTkwjJ3RNLUIsW3JjJC1hLV9HJCwjSE1rQj4tTWImRi5EODk5RF04N1YycTwoWDplZUtLUjNPOiRnTCc3ajZWVDJxSXJwNW5icixoV2gkbmZcVS1kOShDRkYpLVtkKmRwNFg2OixZVCdHM1JRLFsqJjtXUihuKksnL2tyKDFadWdBcnI5PTA8cHMpXjszMTFFUVNIXk5JdTEkW0NmXThVJUI1bkFNbU8na0AhVzhENE1NYGNBIkNYQCg+bD1UV1thJUdcIkcwPSd1NWdhKVBpLmghLmgmVjgtVG1PdT5vJ0BjTWFeVkhdbkFPNFAxbChUOkFIaTEiSFw8b2NAVFAuLitTbC1IJ24pRHAzakZLQTNnPFBSUChYZGZpJSZxL1hdaEA0b19IL0UiQSdrbkdZZjdfWj9TIWNRRVNwK1ZiKzFjdFdIaUYwNSk5WWAmKDBEOExDZ3FCbyhaSj9HTSFKTllgYC5mWCZfRDhyYm5TQGE9QSU+PDd0LmMrKkFeYyZuQV9MY2YzIyhsUjUwZGElTnRDbW0yYV4/cVVZOUNXJW9GMldUKmhMb0MoQzRYbXRXJFMlIT1dTChjRSZmW2AmcC5VaWddJSEsOjEwYDFER1gyWVUwNz4oXEFUY1JaWk0kV0s1aUA8WSVoYDwvM2lqbSdYaV51cyVQdV9JRFNKWTI+WSduJiFBIlBCWzZGOWxYR2ZLTltPMzQiQV4qLnJba0BBPTZQM2pWPjM7RkEkQWtdLX4+ZW5kc3RyZWFtCmVuZG9iagoxNiAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCA3NzkKPj4Kc3RyZWFtCkdhdG4jPnUwMy8nU2MpUi8nX19acVcwPihiTzJyPlRGdEkzUCJoQ2BOSCNHZkxMVVI9Wy1QS2E4SFZYL1ZGW1hYUFc2ZVRuWElTZjM9SkIhWWVzSiohKy5KdVNoamJhYVI0UklLKlxiNT1EIitaJVhYLm5WaDZddGZvM2Y0L1dIN0tERTlWQDRmPiczQVdwbFlVb0cpTjAuYGg9cl4qSSpETz1mQTopR01TQWNQRCFra19kRGRFQFU/b3I/Py9QS3FXVUUiaTtPLXFgYFA1Ol1FMTNNU2tGbE9eXm9JIlA2dWosR2I4JThKJkMlRz9NP282MzYlbCZKUiI4KTgiIjoxRk0ubV4oPD1lLFRFZXB1UUZpXjBXWEpTKzFfMWZARmM3KDZVMU0pIiRqU0RwXS06L2FOYzI+T1tzNDhsOzc2U2IqKVVYalVYKDNEWXJbZGxrJEciIlNlNENyc0A5MzlkJF07JG9pJURNZDx1RV5iJzM2RC9DXStBcEhuV09MOm8/KSUkTy1ic20oVXE9N1E/NzF0XFhWJV9gZiFPYU8xUT1fQm1XZmM4LW9yRjU4SFg6VC5rW1hUNlhrV3A6VUROWGRKR1VGYDJgOTtNKk5hYDVtcipxVEAzU09lVWgxWDk+Tig7Pm46UCtfKmMiZzRrT2FzaGo4WmEsP21FQWFJLDJpTGpbPWAqcikkb2BHX1Jza3JpLj9KUGE+aU1wSmMkazw/NzVHPSdONiJ1TGMxQzdBS1xhVE1AVDNAdUdQRDpYLUltJCU1S2ZkVDRlPG5wVERiZXA8JCo/IkdNMjs1c2pqSyRHaVldZCdxK2ZWYFkwYCJRLFchKzVnIzFlNSwxLFc2MDstUmt1MmBbVFVWW15EamdFOm1CLSpNcyk2Oy05NWBwXCQxcTtqKVdLXEIvcFMzLWFRYmJFdCwnZ100KCwodHJqQkskc2JPL2ZpXzZcWCNiK1g0NTFaVmxzJSVvUmInTyx0Om1sN0pZNWIuIj08VCg7NmhNTkg5LGYxO1YsKFBtQzhMQn4+ZW5kc3RyZWFtCmVuZG9iagoxNyAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAyMDM2Cj4+CnN0cmVhbQpHYXRtPGdKWyZrJjpOXmxxTFI/LVpiXWJYI0crJSQlK3VxWDhNW1dbPEkjMWImaUFXQTdeYlxHbiRhVE1PcE5DPy1qWDNiREZwYWU+LTY2c1RdOmcrcyQ3KF9HbTUnRCJHZCliIlY9PjVAITJkLWZ1XkUyO0haJmBBcTNPTTNPV1pqLVUhNyNwP0xtU2NOKDQ0XzRhQ1VcY104VTdsR2xXRWIqKExqKiU6TmFFYTUpRFNiKl4+ZSE/NUVJTEQ6OVJuZEotX0JBcTZFaTg1cklFUUtNO3ArOHA5Nk5KO2RqWVRAUVFhIkNyPF5OVTBBcyFoJXJvMyJwdWZNPClDXz9hWCk+WG4yYTZgLUUlIXQxOl5bZERGIiQwNTk5OjpxMmVSKEI+K1Y+Ri1ibk0kUUFNRiNzPz5vOkJrVDBpRW1raFFJLisxKUdicGU8YUJyXk8wRDVGOjg5RzshXiRULG5nMj1oPU9JJzJSO09odSdpRTk6MXJRZytnPF5zTT1pTVAvYDpIXmo2QVBMaG41M3RAYWc9Nmo6WkUpLUZOcC5PL1tKdEZNWU4+XCFKPFxEakBTK1NsSVBqYlNTbUZlVCNPPF5hSDU3MiNiTSFKK0pRcyFKZDJXWChGSy1KbzJZWTIiOklMTFJcXj5FQytwW2NOcz01IXI+RU9FXk00W2JhYSh0bDEuZWdCIzdbOmtSVWl0JVw5UGUlVWNsTUVrVmRCbydYYSc/SGNDaSdELWZPSDJaWFglVk9LLExaL1UtW0JSOyNaW2RjUGFEZjE9RFFybCtzUjdMRUtiayEzbEolMixkXVE5LictdDNvQjMmTV8nMWRDPENHOnJIPDdYYDM4U3AkN1AyJi4rVTpQaDBFWVcibyY+UyFfS2RwJTtXa2VeXmFhVnJJZlNJcjBvWDgnRUU5LUkySW1MTl9FI2xfcCEjV01EZSxNXWtgI0VjMDcmb2NXTF9kam89TC10SnFFZ0JHUiFvJiRkbFRTVF9eO3I1RWRbXDErWXFZSzFPTik6JmFPXDBiYGQhczJvVDgvazBDWWciQDBmXyZfdC1BOmQzTVFDIVZdJFNURWRkJCc5OzhpVFBNW3A+MzpfWSQ4JzxxZCxdLDNhYVxpUS4/L1RRX1xlcmdAP2NLdEMtaEYxPCtTIVI5TFl0WkpCM1JkTFoiSSk9RnUqa1E/YDxRXyYwPEtkPD9LRExEU0xLMiRdKEgvIi9rMFMhJCpEb0FDVVZebms0XjNtaTZoK2cob046W2BScm9KQCdgXmlRWENAX0QmWUpVc0c+OC46Wko2VFZnRWlEQGUsUz4sPC5ILGtcXlNAPU1sPWJmTEhaR00tYEBibXQ+YFFsblZrXnByMFNTSV1sXC9yZ21DaiRaUTBka2hkNlFeQScnNVBnMkNcRz9JaT1UPWNnOmduXGY1NDVlOFlgUWBqJSMrYT4lQl83XSFBRGMsMCwpcldQSXVcWS5TQSlXIWA4SlNxa0VDNDckKSJsZFk0bXJdXUlARCs/RWUrISdzTTJEYm1fSEprZlZlJSxBPW8rV04mLzUhL0Q7ODNARGw/JGUraEdMNVpTTzhuTEZzWVNqTmJGL20mMU8yTEM+R0IvMjwtRFliWCZnUGByYC4nTFAmZTlgXCwqWUcsQWpuVjchYVFbRFQqKkBBRGcxTi1WXXJsYihbZD03YGM5TG9dQmdmSyJpIVtQS2RdJ1FKIVFCYCUvKUNzSSZbYmpLLUMqVmVbYjJuWFA0biVLNUA2aGI9YGhHTkAhUkFbU2NKUUhHb08odCk0czIpTW0tXnM1Vk5za2o6YWQzW2NMP0JvUGBgN25acFInWjddQUJwW15VPDtmPHFaQEFxVElzU1skMGtvYT9uXkFbcmo0YGVbY0s2bFcyNiNGWHU+IlhpOy1cOzl0ImZYTVEtYT44MmctLCtHbU9dXEMuVGVOa1lBUF11ZWlZSE9McEw4UmVOUWdMc1QwIktzcDsmYS4uOnIkQEdJWU9jJjRGSmN0LS1KMDVnXmJRNlRRVldDVmRTUD1qcS0sbEVgU2FQL1cuSiMpYiI1WSskPWcjKWMnQTFUM2suQjhkVWxzOztbZE5qYjojMicpS04jK2opOSZZJnI3LV9pbU5iMiJXZDtJaFg6Ol9ZTWsiQCIlYDstQ2xGJThlK0xzVS9rbC07QEc7bVpPZ28zLypLNCZpJFY9dSUmTGxXTi5OYzlROzlPJyFKXDpeYGpbYCEkQVMrKyFVNSdhaVxwJSRQNVY2Mi5RLGRYRXVnUV00JHEuP0tocHFIUHNzQ0tjcWlcJWA4cz5vUUZEYDxYM2tDa1EsVTQiXkxhLU9YbCE8JTFQJDheLl87VnUpOVJnZy9oOWpCLSY7JTNRWlRYI29LaE0iKD4oSVtWKyF0TU5aJk1QVylfXmk/c2dYNldZcF1xXjhBYFRnb2UjQ1Q0TS0qVyMtLFAhbG8+ZkQuLzptK18yJykjMW1eNmxMM0tdJUBhc2RAUHNCT18xWlhANVxfP2s8SFM7bkJpJT4pWjdYVGM5USdELHEsWFJfYDBOTTlHOF1mVV4vVl9FS2RjW19LISkrXT5KPyMvLyEiJyNrbHNldGg2TUUxPGxzUU49X2hHJkFTJ1RbaWJjVklgaDwvZG0uU19pQUs2R3EjVzppQ1wvLD5HO29cIVBAbzhlKnAvcFhMV1RqOipfOSUwPy5IRmJ+PmVuZHN0cmVhbQplbmRvYmoKMTggMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggNTI0Cj4+CnN0cmVhbQpHYXRuIjk1aVE9Jjs5Tk8nbSJKUz07PWlSRUs0ZWg3bzItOD8wLkJxUUQ+NScnXj4wIzIjazk/M0QmMiZOSWA6SCtALUJNQihrN1dUXUBFPV1CaypYJTo2ZGMmL0NXTEBVQDorWFJXSF1yMSZUP1NWcl0rX01NQ2NHLTJVVCdXMj1pNUwzcDprLVJKPS03Z0dhZVFKZV9qVS5hOy4xYSM9MU5LOSIzTk9WQDJFRGJRU1wuJE5vLFopVl89bj5AVnF1IS1tcDBAR3JQTT1xUnBEVlhZOmFUXWhldCluOG1VQWxAblhwV1FfOSc5MUFEXS9LXUFlTkFGW29XVl5OQiYkVHMqNWg+IUFFSm9QWSNRcFIpZiM3Xi5nPzFFPTVgTmpqdEMzPFEoQEk6XFBcRituLUBmQmA5KVg9ZG1iazE6QSs6NlZDJlxcRU9iQUQwPU1UNXVMcmRfP2lVTTVdLUpJUFZPJztwSDFkX29GKjtoJSgpM0NxQ0pqTz5EcFAyZiZmVFpzTyhKOUtvLWxtbUtqaUc6MTwhSDJza2VHKTknKW8hbyRGTUxDQDJWbV4oTEc2O2Bmci8/UUUnN0tATTJHTko1ISRdXUZoT2FkM0RzWz1mTEY0PjFQPlpRRCZ0dDVDbXEvUCtnLVRVZTVPQ25vaWM+a1FCQyZDKD5fOT1WZjRCZCU1IVxNOCx+PmVuZHN0cmVhbQplbmRvYmoKMTkgMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggMTY5Ngo+PgpzdHJlYW0KR2F0bTw/ISQmRSY6Tl9DYlg6LiZbXUhhcFlQQEhfMj9Bc21MOS1USSVwXjYwL0o5WjdhTkFOX2wqJ1FzRyFdUz45TVwrJl8lJkJPZVhhNmw3ajtAJExHWmMwKjhvaVk6PHM0WCRCJHRnWTMhT1snJF83X2hpOjglVkI4blMhaHMmQl5LU1EmVGhqVjozaj4wOkptOUFVOmgyZiUldVZEdFZFZk1sMThUPFBqNz49VD9tSEZiVStCXXInWUBva0lnOm44WWtWM29xXF9XRVZZN3BTbyIpcStHZWYqLE5pW2FEY09ba19XOTwwWkZyZlFGJjc2Q2xjK2lFISMoYm1yPm1CbTojOT02LDYsLnAvXGJrVnRUJm9jR14mOmoiTDtaQmFlPHFqSFUuPkYxaTFmIkc9bGQ0bGMnIUY+bFppPSZTYFUwSz9fN0NtMkdnSGw1WDZ0cUstMVZaXlc/cGlibXNpJlRlcTsrMGFzOEFYOispckEzdCxWazNHbnAqL2NsUUwvNlZIT0heUmI4SixMREA1KEpMLG9CPDhiTEVPXEg/REUwaUsmLSgnWCg3ZzRMXWxTO25pUjEqPmVxQzFiPSpXZGo4KFYrTTg2XWhKX2hFZG41SSVfZ0VKbChITWJPXE1vO0svYWtPP0w6P0wlRlVYWGg5P0Q1TEVyOy1dSFAnTFVRPVJZZ3BXTC9pVE8pOyIjP1FvOTskQzYtcVxBJiJbUiNlYCldMjlzZGs3Mjc/ci1rQzskZEU4XUxaJ2BQUDxUNGo5bTFcXCM0XV9XRzZmcGAkRjRoQSdDLGBuaWJAIURcME07NihiOWZRLCQhaSEzLm1pYD1idVglKVxOdVBsZVptXVxcR1dDKE9XaFpdIiUnJ2VFb0pfL2dCT2lNJSk6LmhbPCo9bF08MFFULFpjP1VzOGAiI0coZEY4OCNeKW8zVkBNVUFJYVBLQmg7bVhuZEVzMyhtaCtBL2U9XWoqIUMzTk8mS1plRixVIWhZNEJaUGQjT0gtdTIqcTpFWUlhU3JMKFxnQ10rXVJhM0JfUVEvJyozSHQtKTxfOSZQViZdOjxfOF9OJDddJlJnR2BZLEw8LTAtZmUoJmAlJmJ0JCYlVV0iUTo0RmFZVGE3OmsrXGt0NC1CNTsoNzFEMSJiUGt0Y05QZlZCb0dRUzdhXCNjNE1uQlQ9WE8tYTwjIUZCNGJqOHM8Q2NWZTozN3JNXy8jTXMkXENRSFhNO1ZTLz9vPCMrUT1oTlElQ3MpXWJZUUxdRSI2QzIqL1xsJFZdYmdtYSQ8KGA+UCVCJW1kTkI6PydTT1NrKWlMUG5cJlZKVWFfQ1ZpbHBQTkhxTmxUNEFxZjFLLiprKW4/dTE/L184ay8maCpEKGxoMFwrRSNZYyo0QUQvPkE6RlwtYDdOXDI0RkcoQSpVNF1HbjJsTGRMbGgzbUVSZEAvQl0qZVtZPEAxUiViJDhBUHEhR0pxQyVZO1ZxLnVaTmhobnEvKUhJYD1xcz5CY05aRE8ibjhuODlMdCRLJzpfPWIuYXNUVGtiOUhkKTomaFNZKzFUX3RgU0tbbDNvIi9fNSsiPCZKQ0FLNVApJkxFXkRHX15ZPEI7Vlo7W002J1o8SC9Aal5VYSxNUmYqWldXVm87cXUzUkVFLmg8WCpKMHQlXkJQaU5ALyUqLWdAWFhiXixuLWRHVCk/WjE7TyJ0XFUtOTRDa1NRbEE8NSswRCVHRXQqKV9QaV5zMnFaY0tBKGEiaUxyakMtZDZhSF5yN0hzRkdaTHRFTD5CbC1GWjpYJz1rNSRqLTA+O3JEJ0hJXU42QSRKNC1xay9wU1JdaS1SVCJbcj1ERDEqM0ZJKzA4Y0goPSxVdE0pRSljaiolSFwwPmtURVckJm47MGQwUiI+KGo6bHJQL1IjJzBARzc4L1AkUjtjMVNQWmAmIWhNJ1YtWCVaK10rQjQsJkMlYlhJLFJpR00nNmw6RnElMWlDUUUiZWZQPFFnKk9tXGomMEUrazFkZCcoZ2dBXV9zNzc/aiQ+VD5pRlZVRTQlcSM2REUyLzFlZVgnPlYjOmw1JGF0J3I7NVMwKmxAUmkyVWxiIUsmbF1ROT1iX1k8V0pNKyo7PVlNZ2xjXENvMCw4T2ZlTjQiYWNKMUkoXGUycmdVN2puRE1OVkUmZiU0NT40RGZEbWZHWDtnTmFiK2NDWmsuYSM+NCQoN1pVc1NvXmtJLFA5WHU1MFAscGAtUFwxaT10Kj9pOTRNdWJON2d+PmVuZHN0cmVhbQplbmRvYmoKeHJlZgowIDIwCjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDA2MSAwMDAwMCBuIAowMDAwMDAwMTEyIDAwMDAwIG4gCjAwMDAwMDAyMTkgMDAwMDAgbiAKMDAwMDAwMDMzMSAwMDAwMCBuIAowMDAwMDAwNTI2IDAwMDAwIG4gCjAwMDAwMDA2NDEgMDAwMDAgbiAKMDAwMDAwMDgzNiAwMDAwMCBuIAowMDAwMDAxMDMxIDAwMDAwIG4gCjAwMDAwMDEyMjYgMDAwMDAgbiAKMDAwMDAwMTQyMSAwMDAwMCBuIAowMDAwMDAxNjE3IDAwMDAwIG4gCjAwMDAwMDE2ODcgMDAwMDAgbiAKMDAwMDAwMTk2OCAwMDAwMCBuIAowMDAwMDAyMDU5IDAwMDAwIG4gCjAwMDAwMDI4NDEgMDAwMDAgbiAKMDAwMDAwNTA5OSAwMDAwMCBuIAowMDAwMDA1OTY5IDAwMDAwIG4gCjAwMDAwMDgwOTcgMDAwMDAgbiAKMDAwMDAwODcxMiAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9JRCAKWzw0NDNkMzVhMzQxZjYzMjAzZjVmMzlmMzVkYTJiOGQxZj48NDQzZDM1YTM0MWY2MzIwM2Y1ZjM5ZjM1ZGEyYjhkMWY+XQolIFJlcG9ydExhYiBnZW5lcmF0ZWQgUERGIGRvY3VtZW50IC0tIGRpZ2VzdCAob3BlbnNvdXJjZSkKCi9JbmZvIDEyIDAgUgovUm9vdCAxMSAwIFIKL1NpemUgMjAKPj4Kc3RhcnR4cmVmCjEwNTAwCiUlRU9GCg==';
+  const bc=atob(pdfData),bn=new Array(bc.length);
+  for(let i=0;i<bc.length;i++)bn[i]=bc.charCodeAt(i);
+  const ba=new Uint8Array(bn),blob=new Blob([ba],{type:'application/pdf'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='KLARA_OS_Evidence_Report.pdf';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════ */
+/* KLARA ENGINE — NavigationContext + Pipeline Execution + Backend Bridge */
+/* ═══════════════════════════════════════════════════════════════════════ */
+
+const KLARAEngine = (function(){
+  'use strict';
+
+  const API_BASE = '/klara';
+  const API_ENDPOINTS = {
+    intake: API_BASE+'/intake', risk: API_BASE+'/risk', context: API_BASE+'/context',
+    routing: API_BASE+'/routing', optimize: API_BASE+'/optimize', recommend: API_BASE+'/recommend',
+    output: API_BASE+'/output', stream: API_BASE+'/session/stream', cancel: API_BASE+'/cancel/monitor'
+  };
+
+  let NavigationContext = {session_id:null,patient_input:null,structured_symptoms:null,risk_classification:null,clinical_flags:null,location:null,service_availability:null,capacity_data:null,routing_scores:null,optimization_result:null,recommendation:null,output_document:null};
+  let telemetry = {sessions:0,pathways:0,totalLatency:0,events:[]};
+  let telemetryVisible = false;
+
+  const scenarios = {
+    pharyngitis: {
+      input:"I've had a sore throat and mild fever for two days. My chest feels a bit tight when I breathe deeply.",
+      symptoms:[{concept:'Pharyngitis',code:'363746003',severity:'moderate'},{concept:'Pyrexia, low-grade',code:'386661006',severity:'mild'},{concept:'Dyspnoea on exertion',code:'267036007',severity:'mild'}],
+      duration:'48 hours, progressive',
+      risk:{level:'YELLOW',score:45,rationale:'Chest tightness + fever = moderate concern. Clinical assessment within 24h.'},
+      flags:['Active salbutamol Rx (DIS/SHARE)','No PCP (NFPR registered)'],
+      location:{city:'Halifax',zone:'Central',postal:'B3H'},
+      services:{virtualcare:{wait:12,status:'available'},utc:{wait:35,name:'Dartmouth UTC'},ed:{wait:186,name:'QEII ED'},pharmacy:{appropriate:false,reason:'Yellow case'}},
+      pathways:[{name:'VirtualCareNS',score:0.92,wait:'12 min',recommended:true},{name:'Dartmouth UTC',score:0.74,wait:'35 min',recommended:false},{name:'QEII Emergency',score:0.31,wait:'3.1 hr',recommended:false},{name:'Pharmacy',score:0.0,wait:'N/A',recommended:false}],
+      objective:0.087, recommendation:'Virtual Care consultation — available now with ~12 min wait. Existing respiratory history warrants same-day clinical assessment.'
+    },
+    uti: {
+      input:"I've been experiencing a burning sensation when urinating for about 3 days. No fever, no back pain.",
+      symptoms:[{concept:'Dysuria',code:'49650001',severity:'moderate'},{concept:'Urinary frequency',code:'162116003',severity:'mild'}],
+      duration:'72 hours, stable',
+      risk:{level:'GREEN',score:22,rationale:'Classic UTI presentation. No systemic signs. Pharmacy-treatable under minor ailments.'},
+      flags:['No relevant medication history','Has PCP — next available in 6 days'],
+      location:{city:'Dartmouth',zone:'Central',postal:'B2W'},
+      services:{virtualcare:{wait:18,status:'available'},utc:{wait:42,name:'Dartmouth UTC'},ed:{wait:210,name:'Dartmouth General ED'},pharmacy:{appropriate:true,name:'Shoppers Drug Mart — Cole Harbour',wait:'< 15 min'}},
+      pathways:[{name:'Pharmacy (Minor Ailment)',score:0.96,wait:'< 15 min',recommended:true},{name:'VirtualCareNS',score:0.68,wait:'18 min',recommended:false},{name:'Dartmouth UTC',score:0.35,wait:'42 min',recommended:false},{name:'Emergency Dept',score:0.08,wait:'3.5 hr',recommended:false}],
+      objective:0.042, recommendation:'Pharmacy visit for UTI assessment under NS Minor Ailment Prescribing. Your nearest pharmacy can assess and prescribe today.'
+    },
+    ankle: {
+      input:"I twisted my ankle playing basketball about an hour ago. It's swollen and hurts, but I can still put some weight on it.",
+      symptoms:[{concept:'Ankle sprain',code:'44465007',severity:'moderate'},{concept:'Localized swelling',code:'442672001',severity:'moderate'},{concept:'Weight-bearing with difficulty',code:'228158008',severity:'mild'}],
+      duration:'1 hour, acute onset',
+      risk:{level:'GREEN',score:28,rationale:'Able to bear weight. No deformity. Ottawa Ankle Rules likely negative.'},
+      flags:['No relevant medication history','No PCP'],
+      location:{city:'Truro',zone:'Northern',postal:'B2N'},
+      services:{virtualcare:{wait:14,status:'available'},utc:{wait:25,name:'Colchester UTC'},ed:{wait:95,name:'Colchester East Hants'},pharmacy:{appropriate:false,reason:'Requires physical examination'}},
+      pathways:[{name:'Colchester UTC',score:0.88,wait:'25 min',recommended:true},{name:'VirtualCareNS',score:0.52,wait:'14 min',recommended:false},{name:'Colchester East Hants ED',score:0.41,wait:'1.6 hr',recommended:false},{name:'Pharmacy',score:0.0,wait:'N/A',recommended:false}],
+      objective:0.063, recommendation:'Walk-in at Colchester UTC — 25 min estimated wait. Physical exam needed to rule out fracture.'
+    },
+    chest_pain: {
+      input:"I'm having sudden sharp chest pain and trouble breathing. It started 20 minutes ago. I feel dizzy.",
+      symptoms:[{concept:'Acute chest pain',code:'29857009',severity:'severe'},{concept:'Dyspnoea at rest',code:'161941007',severity:'severe'},{concept:'Dizziness',code:'404640003',severity:'moderate'}],
+      duration:'20 minutes, acute onset',
+      risk:{level:'RED',score:92,rationale:'EMERGENCY — Acute chest pain + dyspnoea at rest + dizziness. Possible cardiac event.'},
+      flags:['RED FLAG: Acute chest pain','RED FLAG: Dyspnoea at rest','MANDATORY ESCALATION'],
+      location:{city:'Sydney',zone:'Eastern',postal:'B1P'},
+      services:{virtualcare:{wait:null,status:'not_appropriate'},utc:{wait:null,status:'not_appropriate'},ed:{wait:0,name:'Cape Breton Regional Hospital'},pharmacy:{appropriate:false}},
+      pathways:[{name:'911 / Emergency Dept',score:1.00,wait:'Immediate',recommended:true},{name:'VirtualCareNS',score:0.0,wait:'BLOCKED',recommended:false},{name:'Walk-in',score:0.0,wait:'BLOCKED',recommended:false},{name:'Pharmacy',score:0.0,wait:'BLOCKED',recommended:false}],
+      objective:0.0, recommendation:'CALL 911 IMMEDIATELY. This presentation requires emergency medical attention. Do not drive yourself.'
+    }
+  };
+
+  const pipelineStages = [
+    {id:'intake',endpoint:'intake',latency:[280,420]},{id:'risk',endpoint:'risk',latency:[350,520]},
+    {id:'context',endpoint:'context',latency:[200,380]},{id:'routing',endpoint:'routing',latency:[300,500]},
+    {id:'optimize',endpoint:'optimize',latency:[450,700]},{id:'recommend',endpoint:'recommend',latency:[250,400]},
+    {id:'output',endpoint:'output',latency:[180,320]}
+  ];
+
+  function uid(){return 'KLR-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).substr(2,4).toUpperCase()}
+  function randBetween(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+  function $(id){return document.getElementById(id)}
+  function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+
+  function updateCtxField(key,value,html){
+    const mapping={session_id:'ctx-session',patient_input:'ctx-input',structured_symptoms:'ctx-symptoms',risk_classification:'ctx-risk',clinical_flags:'ctx-flags',location:'ctx-location',service_availability:'ctx-services',capacity_data:'ctx-capacity',routing_scores:'ctx-routing',optimization_result:'ctx-optresult',recommendation:'ctx-rec',output_document:'ctx-output'};
+    const target=$(mapping[key]);if(!target)return;target.classList.remove('empty');
+    if(html)target.innerHTML=value;else target.textContent=value;
+  }
+
+  function setStageState(stageId,state,timeMs){
+    const ps=$('ps-'+stageId),pn=$('pn-'+stageId),pt=$('pt-'+stageId);if(!ps)return;
+    ps.classList.remove('stage-active','stage-complete');pn.classList.remove('active','completed','error-node');
+    if(state==='active'){ps.classList.add('stage-active');pn.classList.add('active');pt.textContent='...';}
+    else if(state==='complete'){ps.classList.add('stage-complete');pn.classList.add('completed');pn.textContent='✓';if(timeMs!==undefined)pt.textContent=timeMs+'ms';}
+    else if(state==='error'){pn.classList.add('error-node');pt.textContent='ERR';}
+  }
+
+  async function apiCall(endpoint,payload){
+    // Production: return await fetch(API_ENDPOINTS[endpoint],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.json());
+    const stage=pipelineStages.find(s=>s.endpoint===endpoint);
+    const latency=stage?randBetween(stage.latency[0],stage.latency[1]):randBetween(200,400);
+    await wait(latency); return {success:true,latency_ms:latency};
+  }
+
+  function connectStream(sessionId){
+    // Production: const evtSource = new EventSource(API_ENDPOINTS.stream+'?session='+sessionId);
+    // evtSource.addEventListener('stage:intake_complete', ...); etc.
+  }
+
+  function emitTelemetry(event,data){
+    telemetry.events.push({timestamp:new Date().toISOString(),event:event,session_id:NavigationContext.session_id,data:data});
+    // Production: navigator.sendBeacon('/klara/telemetry',JSON.stringify(entry));
+    updateTelemetryBar();
+  }
+
+  function updateTelemetryBar(){
+    $('telemSessions').textContent=telemetry.sessions;
+    $('telemPathways').textContent=telemetry.pathways;
+    if(telemetry.sessions>0)$('telemLatency').textContent=Math.round(telemetry.totalLatency/telemetry.sessions)+'ms';
+  }
+
+  function generateFHIR(ctx,scenario){
+    const rec=scenario.pathways.find(p=>p.recommended);
+    return {
+      resourceType:"Bundle",type:"document",
+      meta:{profile:["http://hl7.org/fhir/ca/core/StructureDefinition/profile-bundle"],lastUpdated:new Date().toISOString()},
+      identifier:{system:"urn:klara:session",value:ctx.session_id},
+      entry:[
+        {resource:{resourceType:"Composition",status:"final",type:{coding:[{system:"http://loinc.org",code:"11488-4",display:"Consultation note"}]},title:"KLARA Navigation Intake Document",date:new Date().toISOString(),
+          section:[
+            {title:"Presenting Symptoms",text:{status:"generated",div:scenario.symptoms.map(s=>s.concept+' (SNOMED:'+s.code+')').join('; ')}},
+            {title:"Risk Classification",text:{status:"generated",div:scenario.risk.level+' — Score: '+scenario.risk.score+'/100. '+scenario.risk.rationale}},
+            {title:"Routing Recommendation",text:{status:"generated",div:rec?rec.name+' (Score:'+rec.score+')':'N/A'}}
+          ]}},
+        {resource:{resourceType:"Observation",status:"final",code:{coding:[{system:"http://klara.ns.ca/fhir/CodeSystem/risk-class",code:scenario.risk.level.toLowerCase()}]},valueQuantity:{value:scenario.risk.score,unit:"score",system:"http://klara.ns.ca/fhir/units"}}}
+      ]
+    };
+  }
+
+  function renderFHIR(bundle){
+    return JSON.stringify(bundle,null,2)
+      .replace(/"([^"]+)":/g,'<span class="fk">"$1"</span>:')
+      .replace(/: "([^"]+)"/g,': <span class="fs">"$1"</span>')
+      .replace(/: (\d+\.?\d*)/g,': <span class="fv">$1</span>')
+      .replace(/: (true|false)/g,': <span class="fb">$1</span>');
+  }
+
+  function renderOptimization(pathways,objective){
+    const c=$('optPathways');c.innerHTML='';
+    pathways.forEach((p,i)=>{
+      const div=document.createElement('div');div.className='opt-path'+(p.recommended?' recommended':'');
+      const pct=Math.round(p.score*100),col=p.recommended?'var(--green)':(p.score>0.5?'var(--gold)':'var(--text-muted)');
+      div.innerHTML='<div class="opt-path-rank">#'+(i+1)+'</div><div class="opt-path-name">'+p.name+(p.recommended?' ✓':'')+'</div><div class="opt-path-score">'+p.score.toFixed(2)+'</div><div class="opt-path-bar"><div class="opt-path-bar-fill" style="width:'+pct+'%;background:'+col+'"></div></div>';
+      c.appendChild(div);
+    });
+    $('optObjective').textContent='min(Σ strain) = '+objective.toFixed(3);
+    $('optResults').classList.add('visible');
+  }
+
+  async function run(){
+    const input=$('demoInput').value.trim();
+    if(!input){$('demoInput').focus();$('demoInput').style.borderColor='var(--amber)';setTimeout(()=>$('demoInput').style.borderColor='',1500);return;}
+    let scenario=null;const il=input.toLowerCase();
+    if(il.includes('chest pain')||il.includes('trouble breathing'))scenario=scenarios.chest_pain;
+    else if(il.includes('burn')&&il.includes('urinat'))scenario=scenarios.uti;
+    else if(il.includes('ankle')||il.includes('twist'))scenario=scenarios.ankle;
+    else scenario=scenarios.pharyngitis;
+
+    reset();
+    const sessionId=uid();NavigationContext.session_id=sessionId;NavigationContext.patient_input=input;
+    $('execStatusDot').className='exec-status-dot running';
+    $('execSessionId').textContent='SESSION: '+sessionId;$('execRunBtn').disabled=true;
+    emitTelemetry('session_start',{input_length:input.length});telemetry.sessions++;
+    let totalLatency=0;connectStream(sessionId);
+
+    // STAGE 1: INTAKE
+    setStageState('intake','active');updateCtxField('session_id',sessionId);
+    updateCtxField('patient_input','"'+input.substring(0,80)+(input.length>80?'...':'')+'"');
+    const r1=await apiCall('intake',{session_id:sessionId,input:input});totalLatency+=r1.latency_ms;
+    NavigationContext.structured_symptoms=scenario.symptoms;
+    updateCtxField('structured_symptoms',scenario.symptoms.map(s=>'<code>'+s.concept+'</code> <span style="color:var(--text-muted)">('+s.code+')</span>').join('<br>'),true);
+    setStageState('intake','complete',r1.latency_ms);
+
+    // STAGE 2: RISK
+    setStageState('risk','active');
+    const r2=await apiCall('risk',{session_id:sessionId});totalLatency+=r2.latency_ms;
+    NavigationContext.risk_classification=scenario.risk;
+    updateCtxField('risk_classification','<span class="risk-'+scenario.risk.level.toLowerCase()+'">'+scenario.risk.level+' — '+scenario.risk.score+'/100</span><br><span style="color:var(--text-muted);font-size:11px">'+scenario.risk.rationale+'</span>',true);
+    setStageState('risk','complete',r2.latency_ms);emitTelemetry('risk_classification',{level:scenario.risk.level,score:scenario.risk.score});
+
+    // STAGE 3: CONTEXT
+    setStageState('context','active');
+    const r3=await apiCall('context',{session_id:sessionId});totalLatency+=r3.latency_ms;
+    NavigationContext.clinical_flags=scenario.flags;NavigationContext.location=scenario.location;
+    updateCtxField('clinical_flags',scenario.flags.map(f=>f.includes('RED FLAG')?'<span style="color:var(--red);font-weight:600">⚠ '+f+'</span>':f).join('<br>'),true);
+    updateCtxField('location',scenario.location.city+', NS · Zone: '+scenario.location.zone+' · '+scenario.location.postal);
+    setStageState('context','complete',r3.latency_ms);
+
+    // STAGE 4: ROUTING
+    setStageState('routing','active');
+    const r4=await apiCall('routing',{session_id:sessionId});totalLatency+=r4.latency_ms;
+    NavigationContext.service_availability=scenario.services;
+    const svcHtml=Object.entries(scenario.services).map(([k,v])=>{
+      if(v.appropriate===false)return'<span style="color:var(--text-muted)">'+k+': Not appropriate'+(v.reason?' — '+v.reason:'')+'</span>';
+      if(v.status==='not_appropriate')return'<span style="color:var(--text-muted)">'+k+': BLOCKED</span>';
+      return k+': <span style="color:var(--green)">'+(v.wait!==null?v.wait+(typeof v.wait==='number'?' min':''):'N/A')+'</span>'+(v.name?' · '+v.name:'');
+    }).join('<br>');
+    updateCtxField('service_availability',svcHtml,true);
+    updateCtxField('capacity_data','Real-time feeds active · Zone: '+scenario.location.zone);
+    NavigationContext.routing_scores=scenario.pathways;
+    updateCtxField('routing_scores',scenario.pathways.map(p=>p.name+': <code>'+p.score.toFixed(2)+'</code>').join('<br>'),true);
+    setStageState('routing','complete',r4.latency_ms);
+
+    // STAGE 5: OPTIMIZE
+    setStageState('optimize','active');
+    const r5=await apiCall('optimize',{session_id:sessionId});totalLatency+=r5.latency_ms;
+    NavigationContext.optimization_result={pathways:scenario.pathways,objective:scenario.objective};
+    const recPath=scenario.pathways.find(p=>p.recommended);
+    updateCtxField('optimization_result','Solver: min(Σ strain) = <code>'+scenario.objective.toFixed(3)+'</code><br>Optimal: <span style="color:var(--green);font-weight:600">'+(recPath?recPath.name:'N/A')+'</span>',true);
+    renderOptimization(scenario.pathways,scenario.objective);
+    setStageState('optimize','complete',r5.latency_ms);
+
+    // STAGE 6: RECOMMEND
+    setStageState('recommend','active');
+    const r6=await apiCall('recommend',{session_id:sessionId});totalLatency+=r6.latency_ms;
+    NavigationContext.recommendation=scenario.recommendation;
+    const isRed=scenario.risk.level==='RED';
+    updateCtxField('recommendation',(isRed?'<span style="color:var(--red);font-weight:700">🚨 ':'<span style="color:var(--green)">✓ ')+scenario.recommendation+'</span>',true);
+    setStageState('recommend','complete',r6.latency_ms);
+    emitTelemetry('pathway_assignment',{pathway:recPath?recPath.name:'emergency',risk:scenario.risk.level});telemetry.pathways++;
+
+    // STAGE 7: FHIR OUTPUT
+    setStageState('output','active');
+    const r7=await apiCall('output',{session_id:sessionId});totalLatency+=r7.latency_ms;
+    const fhirBundle=generateFHIR(NavigationContext,scenario);NavigationContext.output_document=fhirBundle;
+    updateCtxField('output_document','<code>FHIR R4 Bundle</code> · '+fhirBundle.entry.length+' resources · <span style="color:var(--green)">Generated</span>',true);
+    $('fhirJson').innerHTML=renderFHIR(fhirBundle);$('fhirViewer').classList.add('visible');
+    setStageState('output','complete',r7.latency_ms);
+
+    // COMPLETE
+    $('execStatusDot').className='exec-status-dot complete';
+    $('execSessionId').textContent='SESSION: '+sessionId+' · COMPLETE · '+totalLatency+'ms';
+    $('execRunBtn').disabled=false;telemetry.totalLatency+=totalLatency;
+    emitTelemetry('session_completion',{total_latency_ms:totalLatency,risk:scenario.risk.level});
+    updateTelemetryBar();
+    if(!telemetryVisible){telemetryVisible=true;$('telemetryBar').classList.add('visible');}
+    if(scenario.risk.level==='YELLOW')setTimeout(()=>$('cancelNotification').classList.add('visible'),6000);
+  }
+
+  function reset(){
+    NavigationContext={session_id:null,patient_input:null,structured_symptoms:null,risk_classification:null,clinical_flags:null,location:null,service_availability:null,capacity_data:null,routing_scores:null,optimization_result:null,recommendation:null,output_document:null};
+    document.querySelectorAll('#ctxFields .ctx-field-val').forEach(el=>{el.textContent='—';el.className='ctx-field-val empty';});
+    pipelineStages.forEach((s,i)=>{
+      const ps=$('ps-'+s.id),pn=$('pn-'+s.id),pt=$('pt-'+s.id);
+      if(ps)ps.classList.remove('stage-active','stage-complete');
+      if(pn){pn.classList.remove('active','completed','error-node');pn.textContent=i+1;}
+      if(pt)pt.textContent='—';
+    });
+    $('optResults').classList.remove('visible');$('optPathways').innerHTML='';$('optObjective').textContent='—';
+    $('fhirViewer').classList.remove('visible');$('fhirJson').innerHTML='';
+    $('execStatusDot').className='exec-status-dot';$('execSessionId').textContent='SESSION: AWAITING INPUT';$('execRunBtn').disabled=false;
+    $('cancelNotification').classList.remove('visible');
+  }
+
+  function copyFHIR(){
+    if(NavigationContext.output_document){
+      navigator.clipboard.writeText(JSON.stringify(NavigationContext.output_document,null,2)).then(()=>{
+        const btn=document.querySelector('.fhir-copy-btn');btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy Bundle',1500);
+      }).catch(()=>{});
+    }
+  }
+
+  document.querySelectorAll('.demo-preset').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const key=btn.dataset.scenario;
+      if(scenarios[key]){$('demoInput').value=scenarios[key].input;$('demoInput').style.borderColor='var(--gold)';setTimeout(()=>$('demoInput').style.borderColor='',800);}
+    });
+  });
+
+  const lsObs=new IntersectionObserver(entries=>{entries.forEach(en=>{if(en.isIntersecting)en.target.classList.add('in-view');});},{threshold:.1});
+  const lsEl=document.getElementById('liveSystem');if(lsEl)lsObs.observe(lsEl);
+
+  return {
+    run:run,reset:reset,
+    acceptReroute:function(){$('cancelNotification').classList.remove('visible');emitTelemetry('cancellation_reroute_accepted',{});telemetry.pathways++;updateTelemetryBar();},
+    dismissCancel:function(){$('cancelNotification').classList.remove('visible');},
+    copyFHIR:copyFHIR,
+    toggleTelemetry:function(){telemetryVisible=!telemetryVisible;$('telemetryBar').classList.toggle('visible',telemetryVisible);},
+    getContext:function(){return Object.assign({},NavigationContext);},
+    getTelemetry:function(){return Object.assign({},telemetry);},
+    API_ENDPOINTS:API_ENDPOINTS
+  };
+})();
+</script>
 </body>
 </html>

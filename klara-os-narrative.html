@@ -1,0 +1,2895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KLARA OS — Architecture & Live Demo</title>
+  <style>
+    :root {
+      --bg: #0a0a0b;
+      --bg-card: #111113;
+      --bg-hover: #17171a;
+      --border: #1e1e26;
+      --border-active: #2e2e3e;
+      --text-primary: #e8e8f0;
+      --text-secondary: #8888a0;
+      --text-dim: #50505f;
+      --accent: #5b6ef5;
+      --accent-light: #8090ff;
+      --cyan: #00d4ff;
+      --green: #00e09a;
+      --amber: #f5c400;
+      --red: #ff4d6d;
+      --font-sans: -apple-system, 'Inter', 'Segoe UI', Helvetica, sans-serif;
+      --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── SNAKE FLOWCHART MARGINS ── */
+    .page-with-flow {
+      display: grid;
+      grid-template-columns: 140px 1fr 140px;
+      grid-auto-rows: minmax(0, auto);
+      max-width: 1480px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .flow-row {
+      display: contents;
+    }
+    .flow-row > .flow-cell.flow-left {
+      grid-column: 1;
+      min-width: 0;
+      display: flex;
+      justify-content: flex-end;
+      align-items: flex-start;
+      padding: 1.5rem 1rem 0 0;
+    }
+    .flow-row > .flow-cell.flow-center {
+      grid-column: 2;
+      min-width: 0;
+      display: block;
+      padding: 0;
+    }
+    .flow-row > .flow-cell.flow-right {
+      grid-column: 3;
+      min-width: 0;
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+      padding: 1.5rem 0 0 1rem;
+    }
+    .flow-cell.flow-center section,
+    .flow-cell.flow-center > div { width: 100%; }
+    .flow-node {
+      width: 110px;
+      padding: 0.5rem 0.65rem;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      line-height: 1.25;
+      text-align: center;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      flex-shrink: 0;
+      transition: all 0.25s ease;
+      position: sticky;
+      top: 90px;
+    }
+    .flow-node.diamond {
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+      padding: 0.6rem 0.5rem;
+    }
+    .flow-node.oval {
+      border-radius: 999px;
+      padding: 0.5rem 0.75rem;
+    }
+    .flow-node.active {
+      border-color: var(--cyan);
+      background: rgba(0,212,255,0.08);
+      color: var(--cyan);
+      box-shadow: 0 0 20px rgba(0,212,255,0.12);
+    }
+
+    /* ── ANIMATED WAVY CONNECTOR ── */
+    .flow-track {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 2;
+      overflow: visible;
+    }
+    .flow-track svg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+    .flow-track .track-line,
+    .flow-track .track-line-glow {
+      fill: none;
+      stroke: var(--cyan);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 12 16;
+      animation: flowDash 8s linear infinite;
+    }
+    .flow-track .track-line {
+      stroke-width: 3;
+      opacity: 0.95;
+      vector-effect: non-scaling-stroke;
+    }
+    .flow-track .track-line-glow {
+      stroke-width: 6;
+      opacity: 0.3;
+      vector-effect: non-scaling-stroke;
+    }
+    @keyframes flowDash {
+      from { stroke-dashoffset: 0; }
+      to   { stroke-dashoffset: -280; }
+    }
+    .page-with-flow { position: relative; }
+    .flow-row > .flow-cell.flow-center { position: relative; z-index: 1; }
+    .flow-row > .flow-cell.flow-left,
+    .flow-row > .flow-cell.flow-right { position: relative; z-index: 3; }
+    .flow-connector {
+      grid-column: 1 / -1;
+      height: 40px;
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      pointer-events: none;
+    }
+    .flow-connector svg {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+    .flow-connector path {
+      fill: none;
+      stroke: var(--cyan);
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.85;
+    }
+    .flow-connector path.glow {
+      stroke-width: 6;
+      opacity: 0.2;
+    }
+    .flow-connector.connector-above-footer {
+      background: var(--bg);
+    }
+    @media (max-width: 900px) {
+      .flow-track, .flow-connector { display: none; }
+      .page-with-flow { grid-template-columns: 1fr; }
+      .flow-row > .flow-cell.flow-left,
+      .flow-row > .flow-cell.flow-right { display: none !important; }
+      .flow-row > .flow-cell.flow-center { grid-column: 1; }
+    }
+
+    /* ── NAVIGATION ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(10,10,11,0.94);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      height: 56px;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 0.75rem;
+      font-size: 0.88rem; font-weight: 700; letter-spacing: 0.04em;
+    }
+    .nav-dot {
+      width: 7px; height: 7px;
+      background: var(--cyan); border-radius: 50%;
+      animation: pulse 2.2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+    .nav-links { display: flex; gap: 0; list-style: none; }
+    .nav-links a {
+      color: var(--text-secondary); text-decoration: none;
+      font-size: 0.77rem; padding: 0.35rem 0.7rem;
+      border-radius: 4px; transition: all 0.15s;
+    }
+    .nav-links a:hover { color: var(--text-primary); background: var(--border); }
+    .nav-badge { font-size: 0.68rem; color: var(--text-dim); letter-spacing: 0.04em; }
+
+    /* ── LAYOUT HELPERS ── */
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+    .section-label {
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--cyan); margin-bottom: 1.25rem;
+    }
+    .section-title {
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 800; line-height: 1.1;
+      letter-spacing: -0.025em; margin-bottom: 1rem;
+    }
+    .section-title em { font-style: normal; color: var(--text-secondary); }
+    .section-sub {
+      font-size: 1rem; color: var(--text-secondary);
+      max-width: 580px; line-height: 1.75; margin-bottom: 3.5rem;
+    }
+
+    /* ── HERO ── */
+    #hero {
+      padding: 11rem 2rem 7rem;
+      max-width: 1200px; margin: 0 auto;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-kicker {
+      font-size: 0.7rem; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--cyan);
+      display: flex; align-items: center; gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+    .hero-kicker::before {
+      content: ''; width: 28px; height: 1px; background: var(--cyan);
+    }
+    .hero-title {
+      font-size: clamp(2.8rem, 6vw, 5.5rem);
+      font-weight: 900; line-height: 1.02;
+      letter-spacing: -0.035em; margin-bottom: 2rem;
+      max-width: 820px;
+    }
+    .hero-title .hi { color: var(--cyan); }
+    .hero-desc {
+      font-size: 1.1rem; color: var(--text-secondary);
+      max-width: 600px; line-height: 1.8; margin-bottom: 3.5rem;
+    }
+    .hero-stats {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: 8px;
+      overflow: hidden; max-width: 960px;
+    }
+    .hero-stat {
+      background: var(--bg-card); padding: 1.5rem 1.25rem;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .hero-stat:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    }
+    .hero-stat .num {
+      font-size: 2rem; font-weight: 900;
+      letter-spacing: -0.03em; line-height: 1; margin-bottom: 0.45rem;
+    }
+    .hero-stat .lbl {
+      font-size: 0.76rem; color: var(--text-secondary); line-height: 1.4;
+    }
+    .hero-stat .src {
+      font-size: 0.65rem; color: var(--text-dim); margin-top: 0.4rem;
+    }
+
+    /* ── PIPELINE SECTION ── */
+    #pipeline {
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .pipeline-inner { max-width: 1200px; margin: 0 auto; padding: 5rem 2rem; }
+    .p-stages {
+      display: flex; gap: 0;
+      border: 1px solid var(--border); border-radius: 6px;
+      overflow: hidden; margin-top: 3rem;
+      overflow-x: auto;
+    }
+    .p-stage {
+      flex: 1; min-width: 130px;
+      border-right: 1px solid var(--border);
+      padding: 1.25rem 1rem;
+      background: var(--bg); position: relative;
+      transition: background 0.15s;
+    }
+    .p-stage:last-child { border-right: none; }
+    .p-stage:hover { background: var(--bg-hover); }
+    .p-stage-num {
+      font-size: 0.6rem; font-weight: 800;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 0.6rem;
+    }
+    .p-stage-name {
+      font-size: 0.8rem; font-weight: 700;
+      margin-bottom: 0.4rem; line-height: 1.25;
+    }
+    .p-stage-detail {
+      font-size: 0.7rem; color: var(--text-secondary); line-height: 1.5;
+    }
+    .p-stage-arrow {
+      position: absolute; right: -8px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim); font-size: 0.9rem; z-index: 1;
+    }
+
+    /* ── TWO-PHASE ── */
+    .two-phase { max-width: 1200px; margin: 0 auto; padding: 6rem 2rem; }
+    .sol-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .sol-grid.has-connector {
+      grid-template-columns: 1fr 24px 1fr;
+      gap: 0;
+    }
+    .sol-grid.has-connector .sol-card { margin: 0; }
+    .sol-connector-line {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+    }
+    .sol-connector-line svg {
+      width: 100%;
+      height: 100%;
+      min-height: 120px;
+    }
+    .sol-connector-line path {
+      fill: none;
+      stroke: var(--cyan);
+      stroke-width: 2;
+      stroke-linecap: round;
+      opacity: 0.9;
+    }
+    .sol-card {
+      border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    }
+    .sol-card-head {
+      padding: 1.5rem; background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+    }
+    .sol-card-tag {
+      font-size: 0.65rem; font-weight: 800;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--cyan); margin-bottom: 0.5rem;
+    }
+    .sol-card-name { font-size: 1.15rem; font-weight: 800; margin-bottom: 0.4rem; }
+    .sol-card-sub { font-size: 0.78rem; color: var(--text-secondary); }
+    .sol-card-body { padding: 1.25rem; }
+    .sol-field {
+      display: flex; gap: 1rem; padding: 0.65rem 0;
+      border-bottom: 1px solid var(--border); font-size: 0.78rem;
+    }
+    .sol-field:last-child { border-bottom: none; }
+    .sol-key {
+      color: var(--text-dim); font-size: 0.7rem;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      min-width: 110px; padding-top: 0.1rem;
+    }
+    .sol-val { color: var(--text-primary); line-height: 1.55; }
+
+    /* Collapsible solution fields (Solution section only) */
+    .sol-card-body--collapse .sol-field {
+      display: block;
+      padding: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .sol-card-body--collapse .sol-field:last-child { border-bottom: none; }
+    .sol-card-body--collapse .sol-field details {
+      display: block;
+    }
+    .sol-card-body--collapse .sol-field summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      transition: color 0.2s ease, background 0.2s ease;
+      border-radius: 4px;
+      margin: 0 -0.25rem;
+    }
+    .sol-card-body--collapse .sol-field summary::-webkit-details-marker,
+    .sol-card-body--collapse .sol-field summary::marker { display: none; }
+    .sol-card-body--collapse .sol-field summary:hover {
+      color: var(--cyan);
+    }
+    .sol-card-body--collapse .sol-field summary .sol-key {
+      min-width: 0;
+      padding-top: 0;
+      font-weight: 700;
+    }
+    .sol-card-body--collapse .sol-field .sol-chevron {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--cyan);
+      opacity: 0.7;
+      transition: transform 0.25s ease;
+    }
+    .sol-card-body--collapse .sol-field details[open] .sol-chevron {
+      transform: rotate(180deg);
+    }
+    .sol-card-body--collapse .sol-field .sol-val-wrap {
+      overflow: hidden;
+      padding-bottom: 0.75rem;
+      padding-top: 0.15rem;
+    }
+    .sol-card-body--collapse .sol-field .sol-val {
+      font-size: 0.78rem;
+      padding-left: 0;
+    }
+
+    /* Master collapser for Solution 1 + 2 */
+    .sol-master-wrap { margin-top: 2rem; }
+    .sol-master-wrap details { display: block; }
+    .sol-master-wrap summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .sol-master-wrap summary::-webkit-details-marker,
+    .sol-master-wrap summary::marker { display: none; }
+    .sol-master-wrap summary:hover { background: var(--bg-hover); border-color: var(--border-active); }
+    .sol-master-wrap summary .sol-master-chevron {
+      flex-shrink: 0;
+      color: var(--cyan);
+      transition: transform 0.25s ease;
+    }
+    .sol-master-wrap details[open] .sol-master-chevron { transform: rotate(180deg); }
+    .sol-master-wrap .sol-master-content { margin-top: 1.25rem; }
+
+    /* Bridged Solution (Solution 3) */
+    .bridged-solution {
+      margin-top: 2.5rem;
+      padding: 1.5rem 1.5rem 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .bridged-solution-header {
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 1rem;
+    }
+    .bridged-solution-body {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+    .kpi-matrix-box {
+      margin: 0 -1.5rem;
+      padding: 1.25rem 1.5rem;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+    }
+    .kpi-matrix-box .kpi-title {
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 1rem;
+    }
+    .kpi-matrix {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+    }
+    .kpi-cell {
+      padding: 0.75rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      text-align: center;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .kpi-cell:hover {
+      transform: scale(1.03);
+      box-shadow: 0 4px 16px rgba(0,212,255,0.12);
+    }
+    .kpi-cell .kpi-val {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--cyan);
+      margin-bottom: 0.25rem;
+    }
+    .kpi-cell .kpi-lbl {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+    }
+
+    /* ── ARCHITECTURE LAYERS ── */
+    #architecture {
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .arch-inner { max-width: 1200px; margin: 0 auto; padding: 5.5rem 2rem; }
+    .layers { display: flex; flex-direction: column; gap: 1px; margin-top: 3rem; }
+    .layer {
+      border: 1px solid var(--border); overflow: hidden;
+    }
+    .layer-head {
+      padding: 1.5rem 2rem; display: flex;
+      align-items: flex-start; gap: 1.75rem;
+      background: var(--bg);
+    }
+    .layer-num {
+      font-size: 0.62rem; font-weight: 800;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text-dim); min-width: 30px; padding-top: 0.15rem;
+    }
+    .layer-info { flex: 1; }
+    .layer-name { font-size: 1rem; font-weight: 700; margin-bottom: 0.2rem; }
+    .layer-short { font-size: 0.78rem; color: var(--text-secondary); }
+    .layer-tags {
+      display: flex; flex-wrap: wrap; gap: 0.4rem;
+      padding: 1rem 2rem; background: var(--bg-card);
+      border-top: 1px solid var(--border);
+    }
+    .ltag {
+      font-size: 0.67rem; padding: 0.2rem 0.55rem;
+      border: 1px solid var(--border); border-radius: 3px;
+      color: var(--text-secondary); background: var(--bg);
+    }
+    .layer-body {
+      padding: 1.5rem 2rem; background: var(--bg-card);
+      border-top: 1px solid var(--border);
+    }
+    .layer-body p {
+      font-size: 0.83rem; color: var(--text-secondary);
+      line-height: 1.75; margin-bottom: 0.75rem;
+    }
+    .layer-body p:last-child { margin-bottom: 0; }
+
+    /* Layer collapsible — top black boxes */
+    .layer details { display: block; }
+    .layer summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 1.75rem;
+      padding: 1.5rem 2rem;
+      background: var(--bg);
+      transition: background 0.2s;
+    }
+    .layer summary::-webkit-details-marker,
+    .layer summary::marker { display: none; }
+    .layer summary:hover { background: var(--bg-hover); }
+    .layer summary .layer-chevron {
+      flex-shrink: 0;
+      margin-left: auto;
+      padding-top: 0.15rem;
+      color: var(--cyan);
+      opacity: 0.8;
+      transition: transform 0.25s ease;
+    }
+    .layer details[open] .layer-chevron { transform: rotate(180deg); }
+
+    /* ── OPOR BRIDGE ── */
+    .opor-wrap { max-width: 1200px; margin: 0 auto; padding: 6rem 2rem; }
+    .opor-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: 8px;
+      overflow: hidden; margin-top: 3rem;
+    }
+    .opor-cell {
+      background: var(--bg-card); padding: 1.75rem;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .opor-cell:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+    }
+    .opor-cell-lbl {
+      font-size: 0.65rem; font-weight: 800;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 0.6rem;
+    }
+    .opor-cell-name { font-size: 0.92rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .opor-cell-body { font-size: 0.77rem; color: var(--text-secondary); line-height: 1.65; }
+
+    /* ── SYSTEM VALUE ── */
+    #value {
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .value-inner { max-width: 1200px; margin: 0 auto; padding: 5.5rem 2rem; }
+    .value-scenarios {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: 8px;
+      overflow: hidden; margin-top: 3rem;
+    }
+    .v-scenario {
+      background: var(--bg); padding: 2rem;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .v-scenario:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+    }
+    .v-scenario.highlight { background: var(--bg-card); }
+    .v-label {
+      font-size: 0.65rem; font-weight: 800;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 0.75rem;
+    }
+    .v-visits {
+      font-size: 1.6rem; font-weight: 900;
+      letter-spacing: -0.02em; margin-bottom: 0.2rem;
+    }
+    .v-visits span { font-size: 0.82rem; font-weight: 400; color: var(--text-secondary); }
+    .v-ed { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 1.25rem; }
+    .v-total { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.015em; }
+    .v-total.hi { color: var(--cyan); }
+    .v-total-lbl { font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.2rem; }
+    .value-note {
+      margin-top: 2rem; padding: 1.5rem;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: var(--bg); font-size: 0.76rem;
+      color: var(--text-secondary); line-height: 1.7;
+    }
+
+    /* ── EVIDENCE ── */
+    .evidence-wrap { max-width: 1200px; margin: 0 auto; padding: 6rem 2rem; }
+    .ev-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1rem; margin-top: 3rem;
+    }
+    .ev-card {
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 1.4rem; background: var(--bg-card);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .ev-card:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 20px rgba(0,212,255,0.1);
+    }
+    .ev-tag {
+      font-size: 0.62rem; font-weight: 800;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--cyan); margin-bottom: 0.55rem;
+    }
+    .ev-citation {
+      font-size: 0.78rem; font-weight: 700;
+      margin-bottom: 0.4rem; line-height: 1.4;
+    }
+    .ev-finding {
+      font-size: 0.73rem; color: var(--text-secondary); line-height: 1.6;
+    }
+    .traj {
+      margin-top: 2rem; border: 1px solid var(--border);
+      border-radius: 8px; padding: 1.75rem;
+      background: var(--bg-card);
+    }
+    .traj-title {
+      font-size: 0.78rem; font-weight: 600;
+      color: var(--text-secondary); margin-bottom: 1.5rem;
+    }
+    .traj-row {
+      display: flex; align-items: center;
+      gap: 1rem; margin-bottom: 0.7rem;
+    }
+    .traj-yr {
+      font-size: 0.68rem;
+      font-family: var(--font-mono);
+      color: var(--text-dim); min-width: 36px;
+    }
+    .traj-track {
+      flex: 1; height: 5px;
+      background: var(--border); border-radius: 3px; overflow: hidden;
+    }
+    .traj-fill {
+      height: 100%; background: var(--cyan);
+      border-radius: 3px; transition: width 1.2s ease;
+    }
+    .traj-pct {
+      font-size: 0.72rem; font-weight: 700;
+      font-family: var(--font-mono); min-width: 44px;
+      text-align: right;
+    }
+    .traj-src {
+      font-size: 0.63rem; color: var(--text-dim); min-width: 260px;
+    }
+
+    /* ── DESIGN NOTE CALLOUT ── */
+    .callout {
+      padding: 2rem; border: 1px solid var(--border);
+      border-radius: 8px; background: var(--bg-card);
+    }
+    .callout-title {
+      font-size: 1rem; font-weight: 800; margin-bottom: 0.65rem;
+    }
+    .callout-body {
+      font-size: 0.85rem; color: var(--text-secondary);
+      line-height: 1.75; max-width: 820px;
+    }
+
+    /* ══════════════════════════════════════
+       DEMO SECTION
+    ══════════════════════════════════════ */
+    #demo {
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+    }
+    .demo-inner { max-width: 1400px; margin: 0 auto; padding: 5.5rem 2rem; }
+    .demo-layout {
+      display: grid; grid-template-columns: 320px 1fr;
+      gap: 1.25rem; margin-top: 3rem; align-items: start;
+    }
+
+    /* Control */
+    .demo-ctrl {
+      border: 1px solid var(--border); border-radius: 8px;
+      overflow: hidden; position: sticky; top: 72px;
+    }
+    .demo-ctrl-hd {
+      padding: 1rem 1.25rem; background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .sc-list { list-style: none; }
+    .sc-item {
+      padding: 1.1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer; transition: background 0.12s;
+    }
+    .sc-item:hover { background: var(--bg-hover); }
+    .sc-item.active {
+      background: rgba(0,212,255,0.04);
+      border-left: 2px solid var(--cyan);
+    }
+    .sc-name { font-size: 0.8rem; font-weight: 700; margin-bottom: 0.2rem; }
+    .sc-desc { font-size: 0.7rem; color: var(--text-secondary); line-height: 1.4; }
+    .sc-badge {
+      display: inline-block; margin-top: 0.4rem;
+      font-size: 0.6rem; font-weight: 800;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.14rem 0.5rem; border-radius: 2px;
+    }
+    .badge-sol1 {
+      color: var(--green);
+      background: rgba(0,224,154,0.1);
+      border: 1px solid rgba(0,224,154,0.2);
+    }
+    .badge-sol2 {
+      color: var(--amber);
+      background: rgba(245,196,0,0.09);
+      border: 1px solid rgba(245,196,0,0.2);
+    }
+    .run-btn {
+      display: block; width: calc(100% - 2.5rem);
+      margin: 1.1rem 1.25rem;
+      padding: 0.82rem; background: var(--accent);
+      color: #fff; border: none; border-radius: 5px;
+      font-size: 0.8rem; font-weight: 800;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .run-btn:hover { background: var(--accent-light); transform: translateY(-1px); }
+    .run-btn:active { transform: translateY(0); }
+    .run-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    /* Output */
+    .demo-out { display: flex; flex-direction: column; gap: 1rem; }
+
+    /* Pipeline progress */
+    .pp {
+      border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    }
+    .pp-hd {
+      padding: 0.9rem 1.25rem; background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .pp-title {
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--text-secondary);
+    }
+    .pp-status {
+      font-size: 0.65rem; font-family: var(--font-mono);
+      color: var(--text-dim);
+    }
+    .pp-stages {
+      display: flex; gap: 1px; background: var(--border);
+    }
+    .pp-stg {
+      flex: 1; padding: 0.7rem 0.5rem;
+      background: var(--bg-card); text-align: center;
+      transition: all 0.25s;
+    }
+    .pp-stg-num {
+      font-size: 0.57rem; font-family: var(--font-mono);
+      color: var(--text-dim); margin-bottom: 0.2rem;
+    }
+    .pp-stg-name { font-size: 0.6rem; color: var(--text-secondary); line-height: 1.3; }
+    .pp-stg.running {
+      background: rgba(91,110,245,0.08);
+      border-top: 2px solid var(--accent);
+    }
+    .pp-stg.done {
+      background: rgba(0,224,154,0.04);
+      border-top: 2px solid var(--green);
+    }
+    .pp-stg.done .pp-stg-name { color: var(--green); }
+    .pp-stg.barrier {
+      background: rgba(245,196,0,0.05);
+      border-top: 2px solid var(--amber);
+    }
+    .pp-stg.barrier .pp-stg-name { color: var(--amber); }
+
+    /* NavigationContext */
+    .ctx-panel {
+      border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    }
+    .ctx-hd {
+      padding: 0.9rem 1.25rem; background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; user-select: none;
+    }
+    .ctx-title {
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--text-secondary);
+    }
+    .ctx-id {
+      font-size: 0.62rem; font-family: var(--font-mono); color: var(--text-dim);
+    }
+    .ctx-body {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1px; background: var(--border);
+      max-height: 400px; overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .ctx-panel.collapsed .ctx-body { max-height: 0; }
+    .ctx-hd::after {
+      content: '▼'; font-size: 0.6rem; color: var(--text-dim);
+      transition: transform 0.2s ease;
+    }
+    .ctx-panel.collapsed .ctx-hd::after { transform: rotate(-90deg); }
+    .ctx-field { background: var(--bg-card); padding: 0.8rem 1.1rem; }
+    .ctx-fkey {
+      font-size: 0.62rem; font-family: var(--font-mono);
+      color: var(--text-dim); margin-bottom: 0.22rem;
+    }
+    .ctx-fval {
+      font-size: 0.72rem; font-family: var(--font-mono);
+      color: var(--text-primary); word-break: break-all; line-height: 1.4;
+    }
+    .ctx-fval.hi  { color: var(--cyan); }
+    .ctx-fval.gr  { color: var(--green); }
+    .ctx-fval.am  { color: var(--amber); }
+    .ctx-fval.rd  { color: var(--red); }
+    .ctx-fval.barrier-true { color: var(--amber); font-weight: 800; }
+
+    /* Branch display */
+    .branch {
+      border: 1px solid var(--border); border-radius: 8px;
+      overflow: hidden; display: none;
+    }
+    .branch.show { display: block; }
+    .branch-hd {
+      padding: 1.1rem 1.4rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.85rem;
+    }
+    .branch-hd.sol1 { background: rgba(0,224,154,0.04); border-left: 3px solid var(--green); }
+    .branch-hd.sol2 { background: rgba(245,196,0,0.04); border-left: 3px solid var(--amber); }
+    .branch-badge {
+      font-size: 0.62rem; font-weight: 900;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 0.18rem 0.5rem; border-radius: 3px;
+    }
+    .b-sol1 { color: var(--green); background: rgba(0,224,154,0.1); }
+    .b-sol2 { color: var(--amber); background: rgba(245,196,0,0.1); }
+    .branch-title { font-size: 0.88rem; font-weight: 700; }
+    .branch-body { padding: 1.25rem 1.4rem; background: var(--bg-card); }
+    .b-field { display: flex; gap: 1rem; margin-bottom: 0.8rem; font-size: 0.76rem; }
+    .b-field:last-child { margin-bottom: 0; }
+    .b-key { color: var(--text-dim); font-family: var(--font-mono); font-size: 0.68rem; min-width: 160px; }
+    .b-val { color: var(--text-primary); line-height: 1.55; }
+
+    /* Recommendation */
+    .rec {
+      border: 1px solid var(--border); border-radius: 8px;
+      overflow: hidden; display: none;
+    }
+    .rec.show { display: block; }
+    .rec-hd {
+      padding: 1.1rem 1.4rem;
+      background: rgba(0,212,255,0.05);
+      border-bottom: 1px solid rgba(0,212,255,0.18);
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .rec-lbl {
+      font-size: 0.62rem; font-weight: 800;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--cyan);
+    }
+    .rec-body { padding: 1.4rem; background: var(--bg-card); }
+    .rec-pathway {
+      font-size: 1.4rem; font-weight: 900;
+      letter-spacing: -0.015em; margin-bottom: 0.5rem;
+    }
+    .rec-rationale {
+      font-size: 0.8rem; color: var(--text-secondary);
+      line-height: 1.7; margin-bottom: 1.4rem;
+    }
+    .rec-meta { display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
+    .rec-meta-item { font-size: 0.72rem; }
+    .rec-meta-item span {
+      display: block; font-size: 0.62rem;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-dim); margin-bottom: 0.18rem;
+    }
+    .fhir-block {
+      border: 1px solid var(--border); border-radius: 5px; overflow: hidden;
+    }
+    .fhir-hd {
+      padding: 0.55rem 1rem; background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.62rem; font-weight: 800;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .fhir-body {
+      padding: 1rem; font-family: var(--font-mono);
+      font-size: 0.68rem; color: var(--text-secondary);
+      background: var(--bg-card); line-height: 1.7;
+      white-space: pre; overflow-x: auto;
+    }
+
+    /* ── OBJECTIVES ── */
+    #objectives {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .obj-inner { max-width: 1200px; margin: 0 auto; padding: 5.5rem 2rem; }
+    .obj-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: 8px;
+      overflow: hidden; margin-top: 3rem;
+    }
+    .obj {
+      background: var(--bg-card); padding: 1.75rem 1.4rem;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .obj:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .obj-stat {
+      font-size: 2.2rem; font-weight: 900;
+      letter-spacing: -0.03em; line-height: 1; margin-bottom: 0.7rem;
+    }
+    .obj-lbl { font-size: 0.79rem; color: var(--text-secondary); line-height: 1.55; }
+
+    /* ── END SESSION ── */
+    #end-session {
+      border-top: 1px solid var(--border);
+      padding: 4rem 2rem;
+    }
+    .end-inner { max-width: 1200px; margin: 0 auto; }
+    .end-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 2rem; color: var(--text-primary); }
+    .end-links {
+      display: flex; flex-direction: row; flex-wrap: wrap;
+      gap: 1.25rem; justify-content: center; align-items: center;
+      width: 100%; max-width: 1200px; margin: 0 auto;
+      grid-column: 1 / -1; /* span full width so links stay horizontal, not in narrow left column */
+      padding: 2rem;
+    }
+    .end-link {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 1rem 1.5rem; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 0.88rem; font-weight: 700; color: var(--cyan);
+      text-decoration: none; transition: all 0.2s ease;
+    }
+    .end-link:hover {
+      background: rgba(0,212,255,0.08);
+      border-color: var(--cyan);
+      transform: translateY(-2px);
+    }
+    .end-link.top { color: var(--text-secondary); }
+    .end-link.top::before { content: '↑'; }
+    .end-link.top:hover { color: var(--cyan); }
+    .end-link:not(.top)::before { content: '→'; font-weight: 900; }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 3rem 2rem; max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      flex-wrap: wrap; gap: 2rem;
+      background: var(--bg);
+    }
+    #page-footer .flow-cell { background: var(--bg); }
+    .foot-brand { font-size: 0.8rem; color: var(--text-dim); line-height: 1.7; }
+    .foot-brand strong { color: var(--text-secondary); }
+    .foot-meta { font-size: 0.68rem; color: var(--text-dim); text-align: right; line-height: 1.75; }
+    .safety {
+      margin-top: 1rem; padding: 0.7rem 1rem;
+      background: rgba(255,77,109,0.04);
+      border: 1px solid rgba(255,77,109,0.14);
+      border-radius: 4px; font-size: 0.7rem; color: var(--text-dim);
+    }
+
+    /* ── KLARA FRAMEWORK (SUN + MOUNTAINS) ── */
+    .klara-framework {
+      position: relative;
+      width: 100%;
+      min-height: 380px;
+      background: linear-gradient(180deg, #0a0a0b 0%, #0d1117 35%, #111318 70%, #0f1216 100%);
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .klara-framework::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse 80% 50% at 88% 82%, rgba(0,212,255,0.08) 0%, transparent 55%);
+      pointer-events: none;
+    }
+    .klara-framework::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(135deg, transparent 46%, rgba(255,255,255,0.09) 50%, transparent 54%),
+                  linear-gradient(45deg, transparent 46%, rgba(255,255,255,0.09) 50%, transparent 54%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .klara-sun-wrap {
+      position: absolute;
+      bottom: 18%; right: 10%;
+      width: 160px; height: 160px;
+      z-index: 4;
+    }
+    .klara-sun-link {
+      display: block;
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 88px; height: 88px;
+      margin: -44px 0 0 -44px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 32% 32%, #fffef5, #f5e07a 22%, #e8b923 45%, #c4920e 70%, #8b6914 100%);
+      box-shadow: 0 0 60px rgba(245,196,0,0.45), 0 0 120px rgba(0,212,255,0.15), inset -8px -8px 24px rgba(0,0,0,0.2);
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      text-decoration: none;
+    }
+    .klara-sun-link:hover {
+      transform: scale(1.08);
+      box-shadow: 0 0 80px rgba(245,196,0,0.55), 0 0 140px rgba(0,212,255,0.25);
+    }
+    .klara-sun-rays {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 160px; height: 160px;
+      margin: -80px 0 0 -80px;
+      pointer-events: none;
+    }
+    .klara-sun-rays span {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 3px; height: 28px;
+      margin: -14px 0 0 -2px;
+      background: linear-gradient(to bottom, rgba(245,196,0,0.5), transparent);
+      border-radius: 2px;
+      transform-origin: center 44px;
+    }
+    .klara-sun-rays span:nth-child(1){ transform: rotate(0deg); }
+    .klara-sun-rays span:nth-child(2){ transform: rotate(30deg); }
+    .klara-sun-rays span:nth-child(3){ transform: rotate(60deg); }
+    .klara-sun-rays span:nth-child(4){ transform: rotate(90deg); }
+    .klara-sun-rays span:nth-child(5){ transform: rotate(120deg); }
+    .klara-sun-rays span:nth-child(6){ transform: rotate(150deg); }
+    .klara-sun-rays span:nth-child(7){ transform: rotate(180deg); }
+    .klara-sun-rays span:nth-child(8){ transform: rotate(210deg); }
+    .klara-sun-rays span:nth-child(9){ transform: rotate(240deg); }
+    .klara-sun-rays span:nth-child(10){ transform: rotate(270deg); }
+    .klara-sun-rays span:nth-child(11){ transform: rotate(300deg); }
+    .klara-sun-rays span:nth-child(12){ transform: rotate(330deg); }
+    .klara-mountains {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 68%;
+      z-index: 2;
+      display: flex;
+      align-items: flex-end;
+      justify-content: stretch;
+    }
+    .klara-mountains svg {
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: fill;
+      object-position: bottom center;
+    }
+    .klara-mount-layer {
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 100%; height: 100%;
+    }
+    .klara-mount-layer.back { z-index: 1; opacity: 0.5; }
+    .klara-mount-layer.mid { z-index: 2; opacity: 0.78; }
+    .klara-mount-layer.front { z-index: 3; }
+    .klara-copy {
+      position: absolute;
+      bottom: 30%;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      text-align: center;
+      pointer-events: none;
+    }
+    .klara-copy .klara-cgi {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 0.25rem;
+      opacity: 0.9;
+    }
+    .klara-copy .klara-word {
+      font-size: clamp(2rem, 6vw, 3.2rem);
+      font-weight: 900;
+      letter-spacing: 0.2em;
+      color: rgba(232,232,240,0.95);
+      text-shadow: 0 0 40px rgba(0,212,255,0.2);
+    }
+    .klara-copy .klara-tag {
+      font-size: 0.7rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-top: 0.35rem;
+    }
+    .klara-scroll-down {
+      position: absolute;
+      bottom: 22%;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+    .klara-scroll-down:hover {
+      color: var(--cyan);
+      transform: translateX(-50%) translateY(4px);
+    }
+    .klara-scroll-down-arrow {
+      width: 28px; height: 28px;
+      border: 2px solid currentColor;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+      margin-bottom: 0.2rem;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+    .klara-scroll-down:hover .klara-scroll-down-arrow {
+      transform: rotate(45deg) translateY(4px);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity:0; transform: translateY(10px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.4s ease forwards; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      .demo-layout { grid-template-columns: 1fr; }
+      .demo-ctrl { position: static; }
+      .sol-grid { grid-template-columns: 1fr; }
+      .sol-grid.has-connector .sol-connector-line { display: none; }
+      .hero-stats { grid-template-columns: repeat(2, 1fr); }
+      .ev-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .hero-stats { grid-template-columns: 1fr 1fr; }
+      .opor-grid { grid-template-columns: 1fr; }
+      .value-scenarios { grid-template-columns: 1fr; }
+      .ev-grid { grid-template-columns: 1fr; }
+      .klara-framework { min-height: 300px; }
+      .klara-sun-wrap { bottom: 15%; right: 8%; }
+      .klara-copy .klara-word { letter-spacing: 0.12em; }
+      .obj-grid { grid-template-columns: repeat(2, 1fr); }
+      .ctx-body { grid-template-columns: 1fr; }
+      .traj-src { display: none; }
+    }
+
+    /* ── KDEMO STYLES (NEW) ── */
+    .kdemo-evidence-wrap { max-width: 1200px; margin: 0 auto; padding: 6rem 2rem; }
+    .kdemo-dash-grid { display: grid; grid-template-columns: 1fr; gap: 3rem; margin-top: 3rem; }
+    .kdemo-dash-card {
+      border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+      background: var(--bg-card);
+    }
+    .kdemo-dash-header { padding: 1.5rem; border-bottom: 1px solid var(--border); }
+    .kdemo-dash-tag {
+      font-size: 0.65rem; font-weight: 800; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--cyan); margin-bottom: 0.5rem;
+    }
+    .kdemo-dash-title { font-size: 1.15rem; font-weight: 800; margin-bottom: 0.4rem; }
+    .kdemo-dash-desc { font-size: 0.78rem; color: var(--text-secondary); }
+    .kdemo-dash-embed { position: relative; min-height: 600px; }
+    .kdemo-gurobi-cta {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 1.25rem 1.5rem; background: rgba(10,10,11,0.95);
+      border: none; border-top: 1px solid var(--cyan);
+      display: flex; flex-direction: column; gap: 0.35rem;
+      cursor: pointer; text-align: left; color: inherit; font: inherit;
+    }
+    .kdemo-gurobi-cta:hover { background: rgba(0,212,255,0.08); }
+    .kdemo-gurobi-cta-label { font-size: 0.85rem; font-weight: 700; color: var(--cyan); }
+    .kdemo-gurobi-cta-sub { font-size: 0.72rem; color: var(--text-secondary); line-height: 1.4; }
+    .kdemo-dash-caption {
+      padding: 1rem 1.5rem; font-size: 0.78rem; color: var(--text-secondary);
+      background: var(--bg); border-top: 1px solid var(--border);
+    }
+    .kdemo-map-wrap { max-width: 1200px; margin: 0 auto; padding: 6rem 2rem; }
+    .kdemo-map-display { margin-top: 3rem; }
+    .kdemo-map-visual { margin-bottom: 2rem; }
+    .kdemo-stat-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+      border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    }
+    .kdemo-stat-cell {
+      padding: 1.5rem; background: var(--bg-card);
+      border-right: 1px solid var(--border);
+    }
+    .kdemo-stat-cell:last-child { border-right: none; }
+    .kdemo-stat-num {
+      font-size: 1.8rem; font-weight: 900; color: var(--cyan);
+      margin-bottom: 0.5rem; line-height: 1;
+    }
+    .kdemo-stat-lbl { font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .kdemo-stat-note { font-size: 0.7rem; color: var(--text-secondary); }
+    .kdemo-map-bridge { margin-top: 2.5rem; }
+    .kdemo-gurobi-wrap { max-width: 1200px; margin: 0 auto; padding: 6rem 2rem; }
+    .kdemo-gurobi-prelabel {
+      font-size: 0.75rem; color: var(--text-dim); margin-bottom: 1rem;
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .kdemo-gurobi-trigger {
+      display: inline-block; padding: 1rem 2rem; margin-top: 2rem;
+      background: var(--accent); color: white; border: none;
+      border-radius: 6px; font-size: 0.85rem; font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .kdemo-gurobi-trigger:hover {
+      background: var(--accent-light); transform: translateY(-2px);
+    }
+    .kdemo-gurobi-panel {
+      margin-top: 2rem; border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden;
+    }
+    .kdemo-gurobi-header {
+      padding: 1.5rem 2rem; background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+    }
+    .kdemo-gurobi-header h3 { font-size: 1.2rem; font-weight: 800; }
+    .kdemo-gurobi-body { padding: 2rem; background: var(--bg); }
+    .kdemo-flow-explain, .kdemo-rural-explain {
+      display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;
+      padding: 1.5rem; border-radius: 6px; background: var(--bg-card);
+    }
+    .kdemo-rural-explain { background: rgba(245,196,0,0.05); }
+    .kdemo-flow-box {
+      flex: 1; padding: 1rem; border: 1px solid var(--border);
+      border-radius: 4px; background: var(--bg); text-align: center;
+    }
+    .kdemo-flow-box.kdemo-rural { background: rgba(245,196,0,0.03); }
+    .kdemo-flow-title {
+      font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+    .kdemo-flow-desc { font-size: 0.7rem; color: var(--text-secondary); line-height: 1.4; }
+    .kdemo-flow-arrow {
+      font-size: 1.2rem; color: var(--cyan); font-weight: 900;
+      flex-shrink: 0;
+    }
+    .kdemo-plain-lang {
+      margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-card);
+      border-radius: 6px;
+    }
+    .kdemo-plain-lang h4 {
+      font-size: 1rem; font-weight: 700; margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+    .kdemo-plain-lang p {
+      font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;
+    }
+    .kdemo-math-models { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+    .kdemo-model-block {
+      padding: 1.5rem; background: var(--bg-card); border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+    .kdemo-model-block h4 {
+      font-size: 0.9rem; font-weight: 700; margin-bottom: 1rem;
+      color: var(--cyan);
+    }
+    .kdemo-math-content .kdemo-math-item { margin-bottom: 1rem; }
+    .kdemo-math-content .kdemo-math-item strong {
+      color: var(--text-primary); font-size: 0.75rem;
+      display: block; margin-bottom: 0.3rem;
+    }
+    .kdemo-math-content .kdemo-math-item ul {
+      margin-left: 1rem; font-size: 0.7rem; color: var(--text-secondary);
+    }
+    .kdemo-ns-specific {
+      margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-card);
+      border-radius: 6px;
+    }
+    .kdemo-ns-specific h4 {
+      font-size: 1rem; font-weight: 700; margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+    .kdemo-ns-specific p {
+      font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    .kdemo-nova-scotia-matter {
+      padding: 1.5rem; background: rgba(0,212,255,0.03); border-radius: 6px;
+    }
+    .kdemo-nova-scotia-matter h4 {
+      font-size: 1rem; font-weight: 700; margin-bottom: 1.5rem;
+      color: var(--cyan);
+    }
+    .kdemo-ns-points { display: grid; gap: 1rem; }
+    .kdemo-ns-point {
+      padding: 1rem; background: var(--bg-card); border-radius: 4px;
+      border-left: 3px solid var(--cyan);
+    }
+    .kdemo-ns-point strong { color: var(--text-primary); }
+    .kdemo-ns-point { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; }
+    @media (max-width: 1024px) {
+      .kdemo-math-models { grid-template-columns: 1fr; }
+      .kdemo-stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .kdemo-flow-explain, .kdemo-rural-explain { flex-direction: column; }
+      .kdemo-flow-arrow { transform: rotate(90deg); }
+    }
+    @media (max-width: 768px) {
+      .kdemo-stat-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ NAVIGATION ══ -->
+<nav>
+  <div class="nav-brand">
+    <span class="nav-dot"></span>
+    KLARA OS
+  </div>
+  <ul class="nav-links">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#pipeline">Pipeline</a></li>
+    <li><a href="#solution">Solution</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#opor">OPOR</a></li>
+    <li><a href="#value">Value</a></li>
+    <li><a href="#evidence">Evidence</a></li>
+    <li><a href="#demo">Live Demo</a></li>
+    <li><a href="#end-session">End Session</a></li>
+  </ul>
+  <span class="nav-badge">CGI × Saint Mary's University · March 2026</span>
+</nav>
+
+<div class="page-with-flow">
+<div class="flow-track" aria-hidden="true">
+  <svg id="flowTrackSvg">
+    <defs>
+      <linearGradient id="flowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="rgba(0,212,255,0.5)" />
+        <stop offset="50%" stop-color="rgba(0,212,255,0.35)" />
+        <stop offset="100%" stop-color="rgba(0,212,255,0.5)" />
+      </linearGradient>
+    </defs>
+    <path class="track-line-glow" id="flowTrackPath" />
+    <path class="track-line" id="flowTrackPathMain" />
+  </svg>
+</div>
+<!-- ══ HERO ══ -->
+<div class="flow-row">
+  <div class="flow-cell flow-left"><div class="flow-node oval" data-section="hero">Start: Patient / Clinician</div></div>
+  <div class="flow-cell flow-center"><section id="hero">
+  <div class="hero-kicker">Healthcare Navigation Intelligence Infrastructure — Nova Scotia</div>
+  <h1 class="hero-title">
+    Nova Scotia has the<br>infrastructure.<br>
+    <span class="hi">KLARA activates it.</span>
+  </h1>
+  <p class="hero-desc">
+    Two optimization solvers. Seven intelligence stages. One navigation decision — and when the right care pathway can't be reached, KLARA deploys care to the patient instead.
+  </p>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="num">561,139</div>
+      <div class="lbl">Emergency department visits annually — Nova Scotia</div>
+      <div class="src">NS ED Accountability Report 2023–24 · 26% above CIHI national average</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num">181,547</div>
+      <div class="lbl">Non-urgent CTAS 4–5 visits — potentially redirectable</div>
+      <div class="src">35% of total annual ED visits · NS ED Report 2023–24</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num">52,521</div>
+      <div class="lbl">Patients who left without being seen</div>
+      <div class="src">3× national benchmark · 14% higher 7-day mortality risk (McNaughton 2024)</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num">66,768</div>
+      <div class="lbl">Nova Scotians without a family physician</div>
+      <div class="src">NFPR Registry · January 2026 · 51,552 rural ED closure hours</div>
+    </div>
+  </div>
+</section></div>
+  <div class="flow-cell flow-right"></div>
+</div>
+<div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 0 0 C 140 20, 140 40, 280 40"/><path d="M 0 0 C 140 20, 140 40, 280 40"/></svg></div>
+
+<!-- ══ PROBLEM ══ -->
+<div class="flow-row">
+  <div class="flow-cell flow-left"></div>
+  <div class="flow-cell flow-center"><section id="problem">
+  <div class="two-phase" style="padding-top: 6rem; padding-bottom: 6rem;">
+    <div class="section-label">The Problem — Two Intersecting Failures</div>
+    <h2 class="section-title">Navigation fails.<br><em>Then access fails.</em></h2>
+    <p class="section-sub">
+      Nova Scotia's healthcare system is experiencing two compounding failures. Neither can be solved by adding capacity to an already-strained system. Both require a new intelligence layer.
+    </p>
+    <div class="sol-grid has-connector">
+      <div class="sol-card">
+        <div class="sol-card-head">
+          <div class="sol-card-tag">Failure 01 · Navigation</div>
+          <div class="sol-card-name">Patients don't know where to go</div>
+          <div class="sol-card-sub">No system coordinates the care options that already exist</div>
+        </div>
+        <div class="sol-card-body">
+          <div class="sol-field">
+            <div class="sol-key">The gap</div>
+            <div class="sol-val">Pharmacies can prescribe for 19+ minor ailments. VirtualCareNS serves 150–200 patients daily but turns away 100–150 more. 811 provides nurse triage 24/7. No layer connects patients to these options before they default to the emergency department.</div>
+          </div>
+          <div class="sol-field">
+            <div class="sol-key">The result</div>
+            <div class="sol-val">181,547 CTAS 4–5 ED visits annually. 52,521 LWBS events carrying documented 14% higher 7-day mortality risk. ED cost per visit: $275–$355 versus $30–$110 for pharmacy or virtual care.</div>
+          </div>
+          <div class="sol-field">
+            <div class="sol-key">Infrastructure status</div>
+            <div class="sol-val">~$470M invested in digital health. OPOR ($412.7M), VirtualCareNS, Novari ($17M/5yr), DIS/SHARE. All provider-facing. None answers the patient's question: "Where should I go?"</div>
+          </div>
+        </div>
+      </div>
+      <div class="sol-connector-line" aria-hidden="true">
+        <svg viewBox="0 0 24 200" preserveAspectRatio="none"><path d="M 12 0 L 12 200"/></svg>
+      </div>
+      <div class="sol-card">
+        <div class="sol-card-head">
+          <div class="sol-card-tag">Failure 02 · Physical Access</div>
+          <div class="sol-card-name">Patients can't physically reach care</div>
+          <div class="sol-card-sub">Even when the right pathway exists — rural patients cannot reach it</div>
+        </div>
+        <div class="sol-card-body">
+          <div class="sol-field">
+            <div class="sol-key">The gap</div>
+            <div class="sol-val">51,552 rural ED closure hours in 2023–24 (55% unplanned). Roseway Hospital alone: 4,832 hours — 201 full days. When a facility closes, no system coordinates alternative delivery. Patients drive 60–120+ minutes or forgo care entirely.</div>
+          </div>
+          <div class="sol-field">
+            <div class="sol-key">The scale</div>
+            <div class="sol-val">66,768 unattached patients. No provincial system tracks where patients seek care and fail. No demand-side intelligence exists to inform rural physician deployment planning.</div>
+          </div>
+          <div class="sol-field">
+            <div class="sol-key">What's missing</div>
+            <div class="sol-val">OPOR knows what happened to a patient after they received care. KLARA will know where patients are trying to access care and failing. That demand-side intelligence is the foundation of Solution 2.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section></div>
+  <div class="flow-cell flow-right"><div class="flow-node" data-section="problem">Patient Input / Initial Triage</div></div>
+</div>
+<div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 280 0 C 140 20, 140 40, 0 40"/><path d="M 280 0 C 140 20, 140 40, 0 40"/></svg></div>
+
+<!-- ══ EVIDENCE DASHBOARDS ══ -->
+<div class="flow-row">
+  <div class="flow-cell flow-left"><div class="flow-node" data-section="evidence-dash">Evidence A · System Pressure</div></div>
+  <div class="flow-cell flow-center"><section id="evidence-dashboards">
+  <div class="kdemo-evidence-wrap">
+    <div class="section-label">Evidence Foundation — Dashboard Analytics</div>
+    <h2 class="section-title">The data reveals<br><em>the problem.</em></h2>
+    <p class="section-sub">
+      These dashboards establish the evidence base for KLARA OS: where system pressure concentrates, how patients flow through care pathways, and what happens when navigation fails. They show <strong>system value</strong>, <strong>support to existing resources</strong>, and <strong>reduced strain</strong> on the ED—powered by the agentic middleware layer (FastAPI, API, LangChain, Agentic RAG). Dashboard A shows the problem. Dashboard B shows the intervention and the Gurobi optimization logic.
+    </p>
+    <div class="kdemo-dash-grid">
+      <div class="kdemo-dash-card">
+        <div class="kdemo-dash-header">
+          <div class="kdemo-dash-tag">Dashboard A · System Pressure</div>
+          <div class="kdemo-dash-title">Patient Care Pathway — Nova Scotia 2023–24</div>
+          <div class="kdemo-dash-desc">Wrong-door demand, LWBS burden, and unattached patient strain</div>
+        </div>
+        <div class="kdemo-dash-embed">
+          <!-- Patient pathways: local file (same folder as this HTML) or Tableau URL -->
+          <iframe src="simple_routing_dashboard%281%29W.html" width="100%" height="600" frameborder="0" allowfullscreen title="Patient Care Pathway — System Pressure"></iframe>
+        </div>
+        <div class="kdemo-dash-caption">
+          <strong>Key insight:</strong> 181,758 CTAS 4–5 visits annually represent wrong-door demand. 52,521 LWBS patients face documented clinical risk. No system coordinates the care options that already exist.
+        </div>
+      </div>
+      <div class="kdemo-dash-card">
+        <div class="kdemo-dash-header">
+          <div class="kdemo-dash-tag">Dashboard B · KLARA Intervention (Gurobi solution enhanced)</div>
+          <div class="kdemo-dash-title">KLARA Routing &amp; Gurobi Vehicle Allocation</div>
+          <div class="kdemo-dash-desc">Middleware logic: route to care (Solution 1), route when there is no access pipeline (Solution 2). Only emergency cases → ED; non-emergency redirected to the proper pathway.</div>
+        </div>
+        <div class="kdemo-dash-embed" id="dashboard-b-embed">
+          <!-- KLARA routing: local file (same folder) or paste Tableau embed URL -->
+          <iframe src="klara_charts_dashboardW.html" width="100%" height="600" frameborder="0" allowfullscreen title="KLARA Routing Dashboard"></iframe>
+          <button type="button" class="kdemo-gurobi-cta" onclick="scrollToGurobiAndOpen()" title="View Gurobi vehicle allocation and KLARA routing logic">
+            <span class="kdemo-gurobi-cta-label">View Gurobi vehicle allocation &amp; KLARA routing</span>
+            <span class="kdemo-gurobi-cta-sub">Vehicle allocation tailored to KLARA · Solution 1: route to care · Solution 2: route when no access pipeline · ED only for emergencies</span>
+          </button>
+        </div>
+        <div class="kdemo-dash-caption">
+          <strong>Key insight:</strong> Klara focuses on intelligently ensuring only emergency cases are routed to the ED. Non-emergency ED demand is redirected to the proper route in Solution 1 (existing pathways); when there is no access pipeline, Solution 2 routes care to the patient (practitioner deployment). System value and support to existing resources—saving strain on the ED.
+        </div>
+      </div>
+    </div>
+  </div>
+</section></div>
+  <div class="flow-cell flow-right"></div>
+</div>
+<div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 0 0 C 140 20, 140 40, 280 40"/><path d="M 0 0 C 140 20, 140 40, 280 40"/></svg></div>
+
+<!-- ══ NOVA SCOTIA INFRASTRUCTURE ══ -->
+<div class="flow-row">
+  <div class="flow-cell flow-left"></div>
+  <div class="flow-cell flow-center"><section id="nova-scotia-map">
+  <div class="kdemo-map-wrap">
+    <div class="section-label">Infrastructure Geography — Nova Scotia Health Network</div>
+    <h2 class="section-title">The physical network<br><em>KLARA routes across.</em></h2>
+    <p class="section-sub">
+      Nova Scotia Health's hospital and health centre network defines the operating geography for both routing decisions and rural deployment. Four management zones—Western, Northern, Eastern, Central—each with distinct access patterns and closure pressures.
+    </p>
+    <div class="kdemo-map-display">
+      <div class="kdemo-map-visual">
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjUwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMTExMTE4Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSIzMCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjODg4OGEwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4KICAgIE5vdmEgU2NvdGlhIEhlYWx0aCBIb3NwaXRhbHMgJmFtcDsgSGVhbHRoIENlbnRyZXMKICA8L3RleHQ+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNTA1MDVmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4KICAgIFdlc3Rlcm4gfCBOb3J0aGVybiB8IEVhc3Rlcm4gfCBDZW50cmFsIE1hbmFnZW1lbnQgWm9uZXMKICA8L3RleHQ+CiAgPHRleHQgeD0iNTAlIiB5PSI3MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMDBkNGZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4KICAgIFtOb3ZhIFNjb3RpYSBIZWFsdGggTWFwIC0gSGlnaC1SZXMgVmVyc2lvbiBDb21pbmcgU29vbl0KICA8L3RleHQ+Cjwvc3ZnPgo=" alt="Nova Scotia Health Hospitals and Health Centres Network" style="width: 100%; height: auto; border-radius: 8px;" />
+      </div>
+      <div class="kdemo-map-stats">
+        <div class="kdemo-stat-grid">
+          <div class="kdemo-stat-cell">
+            <div class="kdemo-stat-num">51,552</div>
+            <div class="kdemo-stat-lbl">Rural ED closure hours (2023–24)</div>
+            <div class="kdemo-stat-note">55% unplanned · Roseway Hospital: 4,832 hours (201 days)</div>
+          </div>
+          <div class="kdemo-stat-cell">
+            <div class="kdemo-stat-num">4</div>
+            <div class="kdemo-stat-lbl">Management zones</div>
+            <div class="kdemo-stat-note">Western · Northern · Eastern · Central</div>
+          </div>
+          <div class="kdemo-stat-cell">
+            <div class="kdemo-stat-num">60–120+</div>
+            <div class="kdemo-stat-lbl">Minutes drive to alternative care</div>
+            <div class="kdemo-stat-note">When local rural ED closes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="kdemo-map-bridge">
+      <div class="callout">
+        <div class="callout-title">Geography constrains every routing decision</div>
+        <div class="callout-body">This Nova Scotia Health network is the physical substrate KLARA must optimize across. Solution 1 routes patients to available facilities within this network. Solution 2 deploys practitioners to NSH-registered delivery points when the network cannot be reached. Every optimization decision respects these geographic and capacity constraints.</div>
+      </div>
+    </div>
+  </div>
+</section></div>
+  <div class="flow-cell flow-right"><div class="flow-node" data-section="nova-scotia-map">Infrastructure B · NS Geography</div></div>
+</div>
+<div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 280 0 C 140 20, 140 40, 0 40"/><path d="M 280 0 C 140 20, 140 40, 0 40"/></svg></div>
+
+<!-- ══ PIPELINE ══ -->
+<div class="flow-row">
+  <div class="flow-cell flow-left"><div class="flow-node" data-section="pipeline">Session Init / Auth</div></div>
+  <div class="flow-cell flow-center"><div id="pipeline">
+  <div class="pipeline-inner">
+    <div class="section-label">Core System Pipeline</div>
+    <h2 class="section-title">How KLARA routes<br><em>every patient.</em></h2>
+    <p class="section-sub">Seven deterministic modules. Each receives the NavigationContext, performs a single transformation, and returns an enriched context. Two-second timeout per module with AMBER/811 fallback — no patient is ever left without a pathway.</p>
+    <div class="p-stages">
+      <div class="p-stage">
+        <div class="p-stage-num">M1</div>
+        <div class="p-stage-name">Intake Validation</div>
+        <div class="p-stage-detail">Field validation. UTF-8 normalization. SNOMED-CT deduplication. DIS medication complexity flag for auth users (≥5 active = comorbidity, +10 risk uplift).</div>
+        <div class="p-stage-arrow">›</div>
+      </div>
+      <div class="p-stage">
+        <div class="p-stage-num">M2</div>
+        <div class="p-stage-name">Symptom Parsing</div>
+        <div class="p-stage-detail">Symptom graph construction. SNOMED-CT hierarchy mapping. Negation resolution. Co-occurrence detection. MedLine-informed urgency weighting.</div>
+        <div class="p-stage-arrow">›</div>
+      </div>
+      <div class="p-stage">
+        <div class="p-stage-num">M3</div>
+        <div class="p-stage-name">Risk Classification</div>
+        <div class="p-stage-detail">GREEN/AMBER/RED. Schmitt-Thompson protocol alignment. Asymmetric thresholds: pediatric, geriatric, and rural populations. Critical Symptom Register: mandatory ED override.</div>
+        <div class="p-stage-arrow">›</div>
+      </div>
+      <div class="p-stage">
+        <div class="p-stage-num">M4</div>
+        <div class="p-stage-name">Context Enrichment</div>
+        <div class="p-stage-detail">DIS/SHARE medication query (consent-gated). Service directory including NSH-registered delivery points. Closure feeds. Drive-time estimation. Temporal demand model.</div>
+        <div class="p-stage-arrow">›</div>
+      </div>
+      <div class="p-stage">
+        <div class="p-stage-num">M5</div>
+        <div class="p-stage-name">Routing & Access</div>
+        <div class="p-stage-detail">Pathway scoring: 40% acuity + 25% availability + 20% proximity + 15% preference. ACCESS BARRIER DETECTION — evaluates access_barrier_flag. If TRUE: routes to Sol. 2.</div>
+        <div class="p-stage-arrow">›</div>
+      </div>
+      <div class="p-stage">
+        <div class="p-stage-num">M6</div>
+        <div class="p-stage-name">Recommendation</div>
+        <div class="p-stage-detail">RAG-powered output. Sol. 1: pathway + rationale + directions. Sol. 2: practitioner deployment details + delivery point + transit coordination. Non-diagnostic language enforced.</div>
+        <div class="p-stage-arrow">›</div>
+      </div>
+      <div class="p-stage">
+        <div class="p-stage-num">M7</div>
+        <div class="p-stage-name">Structured Output</div>
+        <div class="p-stage-detail">FHIR R4 Composition. CA Core+ v0.3.0 validated. Sol. 2 adds: ServiceRequest, Location, and Appointment resources. AES-256 encryption. Patient HTML. Clinician summary.</div>
+      </div>
+    </div>
+  </div>
+</div></div>
+  <div class="flow-cell flow-right"></div>
+</div>
+<div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 0 0 C 140 20, 140 40, 280 40"/><path d="M 0 0 C 140 20, 140 40, 280 40"/></svg></div>
+
+<!-- ══ TWO-PHASE SOLUTION ══ -->
+<div class="flow-row">
+  <div class="flow-cell flow-left"></div>
+  <div class="flow-cell flow-center"><section id="solution">
+  <div class="two-phase">
+    <div class="section-label">Two-Phase Solution Architecture</div>
+    <h2 class="section-title">Find the right pathway.<br><em>Then deliver it.</em></h2>
+    <p class="section-sub">
+      Solution 1 and Solution 2 share the same <strong>agentic middleware</strong>—FastAPI, API, LangChain, Agentic RAG—NavigationContext schema, and OPOR integration. They show the benefit of the agentic layer: <strong>system value</strong>, <strong>support to existing resources</strong>, and <strong>reduced strain</strong> on the ED. Only emergency cases are routed to the ED; non-emergency is redirected to the proper pathway (Sol. 1) or, when there is no access pipeline, care is routed to the patient (Sol. 2). They are sequential phases of the same patient journey—not separate systems.
+    </p>
+    <div class="sol-master-wrap">
+      <details open>
+        <summary>
+          <span>Solution 1 · The Brain & Solution 2 · Physician Access</span>
+          <span class="sol-master-chevron" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 5 L7 9 L11 5"/></svg></span>
+        </summary>
+        <div class="sol-master-content">
+    <div class="sol-grid">
+      <div class="sol-card">
+        <div class="sol-card-head">
+          <div class="sol-card-tag">Solution 1 · The Brain</div>
+          <div class="sol-card-name">Route patients to the right pathway</div>
+          <div class="sol-card-sub">KLARA is powered by an agentic AI engine, deployed through the user experience as the conversational agent Klara — with LangChain/LangGraph capacity and Gurobi-driven optimization that is already transferable to industry.</div>
+        </div>
+        <div class="sol-card-body sol-card-body--collapse">
+          <div class="sol-field">
+            <details open>
+              <summary><span class="sol-key">Problem solved</span><span class="sol-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></span></summary>
+              <div class="sol-val-wrap"><div class="sol-val">Navigation fails first: patients don't know which care service is appropriate — geographically available, open when needed, and within their mobility constraints. Solution 1 directly addresses this by routing every patient to the right pathway.</div></div>
+            </details>
+          </div>
+          <div class="sol-field">
+            <details open>
+              <summary><span class="sol-key">Agentic AI · Klara</span><span class="sol-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></span></summary>
+              <div class="sol-val-wrap"><div class="sol-val">The conversational agent Klara is the user-facing deployment of the agentic RAG engine (LangGraph DAG: INTAKE → HITL_GATE → CLARIFY → RISK_SCORE → ROUTE_PREP). It uses navigation language only, never diagnostic framing, and produces the PatientInputRecord that drives both optimizers.</div></div>
+            </details>
+          </div>
+          <div class="sol-field">
+            <details open>
+              <summary><span class="sol-key">Optimization · NS ecosystem</span><span class="sol-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></span></summary>
+              <div class="sol-val-wrap"><div class="sol-val">Powered by the middleware engine and supported analytically through Gurobi-driven optimisation, allowing Nova Scotians the proper insights to route them to accessible care. LP: x_ij ∈ {0,1}, minimize system strain + mismatch + wait. Constraints: one-assignment, capacity, clinical safety, closed facility exclusion, rural SLA.</div></div>
+            </details>
+          </div>
+          <div class="sol-field">
+            <details open>
+              <summary><span class="sol-key">Solver</span><span class="sol-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></span></summary>
+              <div class="sol-val-wrap"><div class="sol-val">PuLP (hackathon prototype) / Gurobi (production). Target: &lt;500ms solve for 50 concurrent sessions.</div></div>
+            </details>
+          </div>
+          <div class="sol-field">
+            <details open>
+              <summary><span class="sol-key">Pathways</span><span class="sol-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></span></summary>
+              <div class="sol-val-wrap"><div class="sol-val">VirtualCareNS · Pharmacy (19+ minor ailments) · 811 Telehealth · Walk-in · Urgent Treatment Centre · Emergency Department</div></div>
+            </details>
+          </div>
+          <div class="sol-field">
+            <details open>
+              <summary><span class="sol-key">Value model</span><span class="sol-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></span></summary>
+              <div class="sol-val-wrap"><div class="sol-val">Moderate scenario (3% CTAS 4–5): ~$1.5M ED deflection value. Total modeled system efficiency: ~$8.7M annually. All projections conservative and explicitly modeled.</div></div>
+            </details>
+          </div>
+        </div>
+      </div>
+      <div class="sol-card">
+        <div class="sol-card-head">
+          <div class="sol-card-tag">Solution 2 · Physician Access Optimization</div>
+          <div class="sol-card-name">Deliver care when it cannot be reached</div>
+          <div class="sol-card-sub">When patients in rural or underserved regions cannot physically reach a recommended pathway, KLARA routes accredited physicians and nurse practitioners (NPs) to NSH-registered delivery points — community health centres, registered homes, telehealth stations — so those patients receive care where they are.</div>
+        </div>
+        <div class="sol-card-body sol-card-body--collapse">
+          <div class="sol-field">
+            <details open>
+              <summary><span class="sol-key">Who we route to</span><span class="sol-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></span></summary>
+              <div class="sol-val-wrap"><div class="sol-val">Patients in rural or underserved regions who cannot reach the recommended pathway: &gt;60 min from service, mobility constraint, or nearest ED closed in a rural zone. access_barrier_flag = TRUE triggers Solution 2. Accredited physicians and NPs are then routed to NSH-registered delivery points (community health centres, registered homes, community spaces, telehealth stations, mobile units) so those patients get care without prohibitive travel.</div></div>
+            </details>
+          </div>
+          <div class="sol-field">
+            <details open>
+              <summary><span class="sol-key">Optimization</span><span class="sol-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></span></summary>
+              <div class="sol-val-wrap"><div class="sol-val">VRPTW: y_pk (practitioner → delivery point), z_ik (patient → point). Minimize: practitioner travel + unmet demand penalty + patient travel × vulnerability_weight. Constraints: capacity, time windows, regulatory compliance, clinical matching, geographic feasibility.</div></div>
+            </details>
+          </div>
+          <div class="sol-field">
+            <details open>
+              <summary><span class="sol-key">Solver</span><span class="sol-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></span></summary>
+              <div class="sol-val-wrap"><div class="sol-val">Gurobi (Toth & Vigo 2014 framework). &lt;5s daily schedule. &lt;500ms single-patient match. PuLP heuristic for hackathon prototype.</div></div>
+            </details>
+          </div>
+          <div class="sol-field">
+            <details open>
+              <summary><span class="sol-key">Delivery points</span><span class="sol-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></span></summary>
+              <div class="sol-val-wrap"><div class="sol-val">NSH-registered: community health centres, registered homes, community spaces, telehealth stations, mobile clinical units.</div></div>
+            </details>
+          </div>
+          <div class="sol-field">
+            <details open>
+              <summary><span class="sol-key">Demand signal</span><span class="sol-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></span></summary>
+              <div class="sol-val-wrap"><div class="sol-val">Every flagged session generates rural demand data that doesn't exist anywhere in the current provincial system. KLARA is the first system to capture where patients seek care and fail.</div></div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </div>
+        </div>
+      </details>
+    </div>
+    <div class="bridged-solution">
+      <div class="bridged-solution-header">Bridged Solution</div>
+      <div class="bridged-solution-body">
+        Solution 1 and Solution 2 operate together in sync — aligned with the digital infrastructure routing lapse and the rural specialized care plan. They perform physically as one integrated system: Sol. 1 routes patients to the right pathway; when access barriers are detected, Sol. 2 deploys practitioners to NSH-registered delivery points. Together they provide users a real-time solution that mitigates geographical strain and surfaces the resources available for each patient. This is not a third solution — it is Sol. 1 and Sol. 2 coming together to deliver the complete care pathway.
+      </div>
+      <div class="kpi-matrix-box">
+        <div class="kpi-title">KPI Matrix</div>
+        <div class="kpi-matrix">
+          <div class="kpi-cell"><div class="kpi-val">~$8.7M</div><div class="kpi-lbl">Modeled system value (3% deflection)</div></div>
+          <div class="kpi-cell"><div class="kpi-val">&lt;500ms</div><div class="kpi-lbl">Sol. 1 solve time (Gurobi LP)</div></div>
+          <div class="kpi-cell"><div class="kpi-val">&lt;5s</div><div class="kpi-lbl">Sol. 2 daily schedule (VRPTW)</div></div>
+          <div class="kpi-cell"><div class="kpi-val">100%</div><div class="kpi-lbl">Coverage (all Nova Scotians)</div></div>
+          <div class="kpi-cell"><div class="kpi-val">2s</div><div class="kpi-lbl">Module timeout + AMBER fallback</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section></div>
+  <div class="flow-cell flow-right"><div class="flow-node diamond" data-section="solution">Critical symptoms?</div></div>
+</div>
+<div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 280 0 C 140 20, 140 40, 0 40"/><path d="M 280 0 C 140 20, 140 40, 0 40"/></svg></div>
+
+<!-- ══ GUROBI OPTIMIZATION ENGINE ══ -->
+<div class="flow-row">
+  <div class="flow-cell flow-left"><div class="flow-node" data-section="gurobi-opt">Gurobi Engine · Decision Logic</div></div>
+  <div class="flow-cell flow-center"><section id="gurobi-optimization">
+  <div class="kdemo-gurobi-wrap">
+    <div class="section-label">Technical Appendix</div>
+    <div class="kdemo-gurobi-prelabel">Optimization Model + Rural Routing Logic</div>
+    <h2 class="section-title">The decision engine<br><em>under the workflow.</em></h2>
+    <p class="section-sub">
+      The dashboards show where system pressure concentrates. The Nova Scotia network defines geographic constraints. KLARA structures patient context through the <strong>agentic middleware layer</strong> (FastAPI, API, LangChain, Agentic RAG). Gurobi formalizes the final routing or deployment decision—<strong>system value</strong>, <strong>support to existing resources</strong>, and <strong>reduced strain</strong> on the ED. Only emergency cases are routed to the ED; non-emergency is redirected to the proper pathway (Solution 1) or, when there is no access pipeline, care is routed to the patient (Solution 2).
+    </p>
+    <button type="button" class="kdemo-gurobi-trigger" id="gurobiTriggerBtn" aria-expanded="false" aria-controls="gurobiModel">
+      View Optimization Model (Gurobi)
+    </button>
+    <div class="kdemo-gurobi-panel" id="gurobiModel" style="display: none;" role="region" aria-labelledby="gurobiTriggerBtn">
+      <div class="kdemo-gurobi-header">
+        <h3>Optimization Engine — Gurobi Routing Model</h3>
+      </div>
+      <div class="kdemo-gurobi-body">
+        <div class="kdemo-flow-explain">
+          <div class="kdemo-flow-box">
+            <div class="kdemo-flow-title">Patient Context</div>
+            <div class="kdemo-flow-desc">Symptoms, risk classification, location, mobility constraints, clinical history from Klara's conversational intake</div>
+          </div>
+          <div class="kdemo-flow-arrow">→</div>
+          <div class="kdemo-flow-box">
+            <div class="kdemo-flow-title">Optimization Engine</div>
+            <div class="kdemo-flow-desc">Gurobi LP/VRPTW solver evaluating all feasible pathways under capacity, safety, and geographic constraints</div>
+          </div>
+          <div class="kdemo-flow-arrow">→</div>
+          <div class="kdemo-flow-box">
+            <div class="kdemo-flow-title">Best Care Pathway</div>
+            <div class="kdemo-flow-desc">Optimal assignment: existing service route (Sol. 1) or practitioner deployment (Sol. 2)</div>
+          </div>
+        </div>
+        <div class="kdemo-rural-explain">
+          <div class="kdemo-flow-box kdemo-rural">
+            <div class="kdemo-flow-title">Rural Underserved Region</div>
+            <div class="kdemo-flow-desc">Patient cannot reach recommended service: &gt;60min drive, mobility constraints, or local ED closed</div>
+          </div>
+          <div class="kdemo-flow-arrow">→</div>
+          <div class="kdemo-flow-box kdemo-rural">
+            <div class="kdemo-flow-title">Routing &amp; Allocation Model</div>
+            <div class="kdemo-flow-desc">VRPTW matches available practitioners to NSH-registered delivery points considering time windows and clinical fit</div>
+          </div>
+          <div class="kdemo-flow-arrow">→</div>
+          <div class="kdemo-flow-box kdemo-rural">
+            <div class="kdemo-flow-title">Improved Rural Access</div>
+            <div class="kdemo-flow-desc">Practitioner deployed to patient's region—care delivered where it's needed</div>
+          </div>
+        </div>
+        <div class="kdemo-plain-lang">
+          <h4>Gurobi vehicle allocation tailored to KLARA</h4>
+          <p>The <strong>vehicle allocation problem</strong> (VRPTW) is tailored to KLARA in two ways. <strong>Solution 1</strong>: route patients to the right care pathway—VirtualCareNS, pharmacy, walk-in, UTC, or ED when clinically required. This supports existing resources and saves strain on the ED by redirecting non-emergency ED demand to the proper route. <strong>Solution 2</strong>: when there is <strong>no access pipeline</strong> (e.g. rural, ED closed, &gt;60 min drive, mobility constraint), KLARA does not send the patient to the ED by default; it routes <em>care to the patient</em> via practitioner deployment to NSH-registered delivery points. Klara’s focus: only emergency cases go to the ED; non-emergency is intelligently redirected.</p>
+        </div>
+        <div class="kdemo-plain-lang">
+          <h4>Why optimization is needed</h4>
+          <p>Nova Scotia has 561,139 annual ED visits with 35% potentially redirectable to other pathways. Without optimization, even an AI triage system would make suboptimal assignments—routing patients to facilities at capacity while others remain underutilized, or recommending care that patients cannot physically reach. Gurobi solves these coordination problems mathematically, ensuring each patient gets the best available option given real-time constraints.</p>
+        </div>
+        <div class="kdemo-math-models">
+          <div class="kdemo-model-block">
+            <h4>Solution 1: Linear Programming Model</h4>
+            <div class="kdemo-math-content">
+              <div class="kdemo-math-item">
+                <strong>Decision Variables:</strong> x<sub>ij</sub> ∈ {0,1} where x<sub>ij</sub> = 1 if patient i is assigned to pathway j
+              </div>
+              <div class="kdemo-math-item">
+                <strong>Objective:</strong> Minimize total system strain = Σ[strain<sub>j</sub> × x<sub>ij</sub>] + Σ[mismatch<sub>ij</sub> × x<sub>ij</sub>] + Σ[wait<sub>j</sub> × x<sub>ij</sub>] - Σ[preference<sub>ij</sub> × x<sub>ij</sub>]
+              </div>
+              <div class="kdemo-math-item">
+                <strong>Constraints:</strong>
+                <ul>
+                  <li>One assignment per patient: Σ<sub>j</sub> x<sub>ij</sub> = 1</li>
+                  <li>Capacity limits: Σ<sub>i</sub> x<sub>ij</sub> ≤ C<sub>j</sub></li>
+                  <li>Clinical safety: RED patients → ED/UTC only</li>
+                  <li>Closed facilities excluded from assignment</li>
+                  <li>Rural SLA: ≥1 available pathway per zone</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="kdemo-model-block">
+            <h4>Solution 2: Vehicle Routing Problem with Time Windows (VRPTW)</h4>
+            <div class="kdemo-math-content">
+              <div class="kdemo-math-item">
+                <strong>Decision Variables:</strong>
+                <ul>
+                  <li>y<sub>pk</sub> ∈ {0,1}: practitioner p deployed to delivery point k</li>
+                  <li>z<sub>ik</sub> ∈ {0,1}: patient i assigned to delivery point k</li>
+                  <li>t<sub>pk</sub> ∈ ℝ: arrival time of practitioner p at point k</li>
+                </ul>
+              </div>
+              <div class="kdemo-math-item">
+                <strong>Objective:</strong> Minimize Σ[travel_cost<sub>pk</sub> × y<sub>pk</sub>] + Σ[unmet_demand_penalty<sub>i</sub> × (1 - Σz<sub>ik</sub>)] + Σ[patient_travel<sub>ik</sub> × z<sub>ik</sub> × vulnerability_weight<sub>i</sub>]
+              </div>
+              <div class="kdemo-math-item">
+                <strong>Key Constraints:</strong>
+                <ul>
+                  <li>Practitioner capacity: Σ<sub>k</sub> y<sub>pk</sub> ≤ MaxStops<sub>p</sub></li>
+                  <li>Delivery point capacity: Σ<sub>i</sub> z<sub>ik</sub> ≤ Capacity<sub>k</sub></li>
+                  <li>Time windows: start<sub>k</sub> ≤ t<sub>pk</sub> ≤ end<sub>k</sub></li>
+                  <li>Regulatory compliance: only NSH-registered points eligible</li>
+                  <li>Clinical matching: practitioner credentials must match patient needs</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="kdemo-ns-specific">
+          <h4>How the model supports Solution 1 and Solution 2 — Agentic middleware</h4>
+          <p><strong>Solution 1</strong> uses the <strong>agentic layer</strong>—conversational intake from Klara (LangChain, Agentic RAG), FastAPI and API—plus Gurobi optimization to route patients across Nova Scotia’s existing pathways: VirtualCareNS, pharmacy (19+ minor ailments), walk-in clinics, urgent treatment centres, and emergency departments. The LP model minimizes wait times and system strain while respecting clinical safety. <strong>Benefit</strong>: system value, support to existing resources, reduced ED strain; only emergency cases are routed to the ED.</p>
+          <p><strong>Solution 2</strong> extends the same optimization engine when there is <strong>no access pipeline</strong>: physician/NP allocation and rural outreach. When a patient cannot reach the nearest clinic (e.g. Shelburne, 72km, ED closed), the VRPTW vehicle-allocation model deploys an available practitioner to an NSH-registered delivery point near the patient. Both solutions share the middleware pipeline, NavigationContext, and agentic intelligence—one layer, not separate systems.</p>
+        </div>
+        <div class="kdemo-nova-scotia-matter">
+          <h4>Why this matters in Nova Scotia</h4>
+          <div class="kdemo-ns-points">
+            <div class="kdemo-ns-point">
+              <strong>Low-acuity emergency use:</strong> 181,758 CTAS 4–5 visits annually represent optimization opportunities—patients who could be appropriately served elsewhere with better coordination.
+            </div>
+            <div class="kdemo-ns-point">
+              <strong>Rural access constraints:</strong> 51,552 rural ED closure hours mean traditional "go to your nearest hospital" guidance often fails. Optimization must account for real-time facility status.
+            </div>
+            <div class="kdemo-ns-point">
+              <strong>Provider concentration:</strong> Most specialists and services cluster in HRM. Optimization must balance urban efficiency against rural equity in access.
+            </div>
+            <div class="kdemo-ns-point">
+              <strong>Physician routing opportunities:</strong> 66,768 unattached patients represent unmet demand that could be served through optimized practitioner deployment to regulatory-compliant delivery points across the province.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section></div>
+  <div class="flow-cell flow-right"></div>
+</div>
+<script>
+(function(){
+  var btn = document.getElementById('gurobiTriggerBtn');
+  var panel = document.getElementById('gurobiModel');
+  if (!btn || !panel) return;
+  function toggle() {
+    var hidden = panel.style.display === 'none';
+    panel.style.display = hidden ? 'block' : 'none';
+    if (hidden) panel.style.animation = 'fadeUp 0.4s ease forwards';
+    btn.setAttribute('aria-expanded', hidden ? 'true' : 'false');
+  }
+  btn.onclick = toggle;
+  window.toggleGurobiModel = toggle;
+  window.scrollToGurobiAndOpen = function() {
+    var el = document.getElementById('gurobi-optimization');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(toggle, 400);
+  };
+})();
+</script>
+<div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 0 0 C 140 20, 140 40, 280 40"/><path d="M 0 0 C 140 20, 140 40, 280 40"/></svg></div>
+
+<!-- ══ ARCHITECTURE (4-LAYER) ══ -->
+<div class="flow-row">
+  <div class="flow-cell flow-left"><div class="flow-node" data-section="architecture">M1–M3 Intake / Risk</div></div>
+  <div class="flow-cell flow-center"><div id="architecture">
+  <div class="arch-inner">
+    <div class="section-label">System Architecture — 8-Layer Design</div>
+    <h2 class="section-title">Four layers.<br><em>One operating system.</em></h2>
+    <p class="section-sub">
+      KLARA OS is not an application — it is middleware that integrates with every major component of Nova Scotia's healthcare infrastructure. Each layer is independently scalable and replaceable without disrupting the system.
+    </p>
+
+    <div class="layers">
+
+      <div class="layer">
+        <details open>
+        <summary class="layer-head">
+          <div class="layer-num">L1</div>
+          <div class="layer-info">
+            <div class="layer-name">User Interaction Layer — Citizens · Clinicians · Administrators</div>
+            <div class="layer-short">Interface Surface · YourHealthNS · 811 Voice · Web Portal · 2FA Authentication</div>
+          </div>
+          <span class="layer-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></span>
+        </summary>
+        <div class="layer-tags">
+          <span class="ltag">YourHealthNS App</span>
+          <span class="ltag">Web Portal</span>
+          <span class="ltag">811 Voice Integration</span>
+          <span class="ltag">Provincial Patient Registry</span>
+          <span class="ltag">2FA (SMS/Email OTP)</span>
+          <span class="ltag">JWT Session Tokens (15-min expiry)</span>
+          <span class="ltag">WCAG 2.1 AA</span>
+        </div>
+        <div class="layer-body">
+          <p>Patient-facing intake via three channels — YourHealthNS mobile application, web portal, and 811 digital pathway. The 811 voice pathway is critical for rural and elderly demographics. The Province's discontinued MyHealthNS portal (shut down 2020 due to low uptake) is instructive: app-only strategies fail when they ignore demographic access constraints. KLARA is a multi-channel system from inception.</p>
+          <p>Authentication supports anonymous sessions (full navigation, no OPOR data pull) and authenticated returning users. authenticated sessions require Health Card + 2FA verification against the Provincial Patient Registry, enabling DIS medication pulls and OPOR history enrichment — both required for Solution 2 practitioner-to-patient matching. No PHI persists beyond the 15-minute session window.</p>
+        </div>
+        </details>
+      </div>
+
+      <div class="layer">
+        <details open>
+        <summary class="layer-head">
+          <div class="layer-num">L2</div>
+          <div class="layer-info">
+            <div class="layer-name">Conversational Intelligence Engine — Symptom Parsing · Risk Scoring · RAG Reasoning</div>
+            <div class="layer-short">Core Intelligence · LangGraph · SNOMED-CT · Schmitt-Thompson · MedLine API</div>
+          </div>
+          <span class="layer-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></span>
+        </summary>
+        <div class="layer-tags">
+          <span class="ltag">Conversational agent Klara</span>
+          <span class="ltag">LangGraph RAG Agent</span>
+          <span class="ltag">SNOMED-CT (Canadian edition)</span>
+          <span class="ltag">Schmitt-Thompson Protocol</span>
+          <span class="ltag">MedLine/PubMed API</span>
+          <span class="ltag">ChromaDB Vector Store</span>
+          <span class="ltag">Redis Session Cache (15-min TTL, AES-256)</span>
+          <span class="ltag">Non-Diagnostic Constraint (RULE-RC-01)</span>
+        </div>
+        <div class="layer-body">
+          <p>A multi-turn agentic RAG system (LangGraph directed acyclic graph) that conducts conversational intake, extracts structured clinical data, and produces the PatientInputRecord driving both optimizers. Five-node graph: INTAKE → HITL_GATE (Critical Symptom Register check — any match exits immediately to 911/ED) → CLARIFY (max 3 turns, MedLine-grounded) → RISK_SCORE → ROUTE_PREP.</p>
+          <p>RAG-constrained architecture validated at 96.4% accuracy with zero hallucinations (npj Digital Medicine, 2025). All outputs use navigation language — never diagnostic framing. RULE-RC-01 is architecturally enforced at the governance layer and cannot be suppressed by operator configuration, user input, or system degradation. Health Canada SaMD non-classification maintained (December 2019 guidance).</p>
+          <p>The 15-minute Redis session cache is critical for Solution 2: practitioner matching requires the complete clinical profile generated during conversational intake. A sore throat that routes to pharmacy in Solution 1 may require a physician encounter in Solution 2 if DIS reveals a complex medication profile — the cache bridges both decisions with the same intake data.</p>
+        </div>
+        </details>
+      </div>
+
+      <div class="layer">
+        <details open>
+        <summary class="layer-head">
+          <div class="layer-num">L3–L4</div>
+          <div class="layer-info">
+            <div class="layer-name">System Integration & Middleware — FHIR R4 · OPOR · DIS/SHARE · 7-Module Pipeline</div>
+            <div class="layer-short">Integration Fabric · Oracle Health · VirtualCareNS · Novari · 2-Second Module Timeout</div>
+          </div>
+          <span class="layer-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></span>
+        </summary>
+        <div class="layer-tags">
+          <span class="ltag">OPOR (Oracle Health Millennium)</span>
+          <span class="ltag">FHIR R4 / SMART on FHIR</span>
+          <span class="ltag">CDS Hooks</span>
+          <span class="ltag">VirtualCareNS (Maple) API</span>
+          <span class="ltag">DIS/SHARE (consent-gated)</span>
+          <span class="ltag">Novari eRequest</span>
+          <span class="ltag">Virtual Hallway</span>
+          <span class="ltag">7-Module Pipeline</span>
+          <span class="ltag">AMBER/811 Fallback</span>
+        </div>
+        <div class="layer-body">
+          <p>The connective tissue between KLARA and Nova Scotia's existing digital health ecosystem. KLARA does not replace any provincial system — it orchestrates them. The 7-module middleware pipeline executes sequentially with 2-second timeouts per module and AMBER/811 fallback on failure. No patient is ever left without a care pathway regardless of system degradation.</p>
+          <p>OPOR integration (Oracle Health Millennium, FHIR R4) is bidirectional: OPOR feeds patient clinical context into KLARA for enriched routing; KLARA returns structured FHIR R4 Composition documents so clinicians receive organized intake data on first patient encounter. Novari eRequest receives pre-qualified structured referrals, reducing rejection and rework. DIS/SHARE medication data is queried only with explicit patient consent — flags medication complexity for risk uplift and practitioner matching.</p>
+        </div>
+        </details>
+      </div>
+
+      <div class="layer">
+        <details open>
+        <summary class="layer-head">
+          <div class="layer-num">L5a · L5b</div>
+          <div class="layer-info">
+            <div class="layer-name">Optimization Layer — Provincial Health Infrastructure · Care Delivery Endpoints</div>
+            <div class="layer-short">Sol. 1 LP · Sol. 2 VRPTW · Regulatory-Compliant Delivery Points · Practitioner Registry</div>
+          </div>
+          <span class="layer-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></span>
+        </summary>
+        <div class="layer-tags">
+          <span class="ltag">Solution 1 — PuLP / Gurobi LP</span>
+          <span class="ltag">Solution 2 — Gurobi VRPTW</span>
+          <span class="ltag">Emergency Departments</span>
+          <span class="ltag">Urgent Treatment Centres</span>
+          <span class="ltag">VirtualCareNS</span>
+          <span class="ltag">Pharmacy (19+ minor ailments)</span>
+          <span class="ltag">NSH-Registered Delivery Points</span>
+          <span class="ltag">Freelance Practitioner Registry</span>
+          <span class="ltag">Transit Coordination</span>
+        </div>
+        <div class="layer-body">
+          <p>Both optimizers write to the same NavigationContext.optimization_result field. The downstream Recommendation (M6) and Output (M7) modules handle both solution types transparently. Solution 1 activates by default — LP assignment minimizes total system strain across available pathways. Solution 2 activates when access_barrier_flag = TRUE — VRPTW routes accredited practitioners to NSH-registered delivery points where patients can receive care without prohibitive travel.</p>
+          <p>Solution 2's optimization leverages a proven operations research framework (Toth & Vigo, 2014) applied to a novel context: instead of vehicles visiting customer nodes, licensed physicians and NPs visit regulatory-compliant delivery points — community health centres, registered homes, community spaces, telehealth stations, and mobile clinical units. The practitioner marketplace model requires no new permanent rural infrastructure. If Solution 2 fails, the system falls back to Solution 1's best available pathway with a notification that rural delivery coordination is temporarily unavailable.</p>
+        </div>
+        </details>
+      </div>
+
+    </div>
+
+    <div style="margin-top: 2.5rem;" class="callout">
+      <div class="callout-title">Why KLARA is an Operating System, Not an Application</div>
+      <div class="callout-body">A typical healthcare application solves one problem for one user type. KLARA OS solves a systemic problem for the entire provincial health system — orchestrating multiple underlying platforms, managing real-time state across the care network, and serving as the intelligent coordination layer between citizens and healthcare infrastructure. It is not owned by a single department. It is not a portal. It is not a chatbot. It is provincial health infrastructure.</div>
+    </div>
+  </div>
+</div></div>
+  <div class="flow-cell flow-right"><div class="flow-node diamond" data-section="architecture">Emergency Call?</div></div>
+</div>
+<div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 0 0 C 140 20, 140 40, 280 40"/><path d="M 0 0 C 140 20, 140 40, 280 40"/></svg></div>
+
+<!-- ══ OPOR BRIDGE ══ -->
+<div class="flow-row">
+  <div class="flow-cell flow-left"></div>
+  <div class="flow-cell flow-center"><section id="opor">
+  <div class="opor-wrap">
+    <div class="section-label">OPOR Bridge Architecture</div>
+    <h2 class="section-title">$412.7M in infrastructure.<br><em>Activated for patients.</em></h2>
+    <p class="section-sub">
+      KLARA extends OPOR from clinical records into active care navigation and physician deployment. This is the core strategic argument for KLARA's value as provincial healthcare infrastructure.
+    </p>
+    <div class="opor-grid">
+      <div class="opor-cell">
+        <div class="opor-cell-lbl">What OPOR provides</div>
+        <div class="opor-cell-name">The Clinical Backbone</div>
+        <div class="opor-cell-body">Oracle Health Millennium platform. Single longitudinal health record for every Nova Scotian. FHIR R4 APIs, SMART on FHIR app launch, CDS Hooks for real-time clinical decision support. Provincial Patient Registry for identity resolution. IWK Health live December 2025. Central Zone targeting May 2026. Estimated lifecycle investment: $412.7M.</div>
+      </div>
+      <div class="opor-cell">
+        <div class="opor-cell-lbl">What OPOR does not do</div>
+        <div class="opor-cell-name">The Remaining Gap</div>
+        <div class="opor-cell-body">OPOR is clinician-facing. It does not help patients find available care. It does not coordinate care delivery to underserved communities. It does not generate demand-side intelligence about where patients seek care and fail. It provides no navigation layer between a patient's first symptom and their first clinical encounter. This gap exists across all five major provincial digital health investments.</div>
+      </div>
+      <div class="opor-cell">
+        <div class="opor-cell-lbl">What KLARA adds</div>
+        <div class="opor-cell-name">The Bidirectional Bridge</div>
+        <div class="opor-cell-body">OPOR → KLARA: patient identity, clinical history, medication profiles, allergy data — pre-populates intake for returning users. KLARA → OPOR: FHIR R4 structured intake documents, Solution 2 encounter records, and demand-side intelligence: where patients seek care and fail. Data that currently does not exist anywhere in the Nova Scotia provincial system. This feedback loop makes KLARA a force multiplier for the $412.7M OPOR investment.</div>
+      </div>
+    </div>
+  </div>
+</section></div>
+  <div class="flow-cell flow-right"><div class="flow-node" data-section="opor">M4–M5 Context / Routing</div></div>
+</div>
+<div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 280 0 C 140 20, 140 40, 0 40"/><path d="M 280 0 C 140 20, 140 40, 0 40"/></svg></div>
+
+<!-- ══ SYSTEM VALUE ══ -->
+<div class="flow-row">
+  <div class="flow-cell flow-left"><div class="flow-node diamond" data-section="value">Access funnel?</div></div>
+  <div class="flow-cell flow-center"><div id="value">
+  <div class="value-inner">
+    <div class="section-label">System Value Modeling — Solution 1 · Modeled Projections</div>
+    <h2 class="section-title">Modeled system value.<br><em>Conservative assumptions.</em></h2>
+    <p class="section-sub">
+      All projections represent modeled operational value, not guaranteed savings. The moderate 3% scenario is the primary planning reference. Total system value includes ED deflection, LWBS reduction, clinician time recovery, and administrative efficiency.
+    </p>
+    <div class="value-scenarios">
+      <div class="v-scenario">
+        <div class="v-label">Conservative · 1% CTAS 4–5 Deflection</div>
+        <div class="v-visits">1,815 <span>visits redirected / yr</span></div>
+        <div class="v-ed">ED deflection value: ~$499K</div>
+        <div class="v-total">$3.8M</div>
+        <div class="v-total-lbl">Total modeled system value annually</div>
+      </div>
+      <div class="v-scenario highlight">
+        <div class="v-label">Moderate · 3% Deflection · Planning Scenario</div>
+        <div class="v-visits">5,446 <span>visits redirected / yr</span></div>
+        <div class="v-ed">ED deflection value: ~$1.5M</div>
+        <div class="v-total hi">$8.7M</div>
+        <div class="v-total-lbl">Total modeled system value annually</div>
+      </div>
+      <div class="v-scenario">
+        <div class="v-label">Ambitious · 5% Deflection</div>
+        <div class="v-visits">9,077 <span>visits redirected / yr</span></div>
+        <div class="v-ed">ED deflection value: ~$2.5M</div>
+        <div class="v-total">$17.0M</div>
+        <div class="v-total-lbl">Total modeled system value annually</div>
+      </div>
+    </div>
+    <div class="value-note">
+      <strong style="color: var(--text-primary);">Methodology.</strong> 181,547 annual CTAS 4–5 visits (NS ED Accountability Report 2023–24). Per-deflection value: $275 cost differential (CIHI ED vs. primary/virtual care). Total system value breakdown: LWBS reduction $308K–$1.23M; clinician time recovery $1.4M–$7.0M; administrative efficiency $1.6M–$6.3M. Solution 2 value is measured in rural patients connected to care — not dollars saved. International comparisons (Baier et al. 2019: 15–25% lower non-urgent ED utilization under structured navigation) suggest the conservative 1% scenario is the appropriate planning baseline. NHS 111 evidence (Turner 2013) confirms navigation systems improve routing quality even when total ED volumes remain stable.
+    </div>
+  </div>
+</div></div>
+  <div class="flow-cell flow-right"></div>
+</div>
+<div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 0 0 C 140 20, 140 40, 280 40"/><path d="M 0 0 C 140 20, 140 40, 280 40"/></svg></div>
+
+<!-- ══ EVIDENCE ══ -->
+<div class="flow-row">
+  <div class="flow-cell flow-left"></div>
+  <div class="flow-cell flow-center"><section id="evidence">
+  <div class="evidence-wrap">
+    <div class="section-label">Evidence Foundation — 24-Source Research Docket</div>
+    <h2 class="section-title">The research supports<br><em>every design decision.</em></h2>
+    <p class="section-sub">
+      The KLARA OS architecture is grounded in peer-reviewed literature, CIHI data, and provincial government reports. All major design decisions have a documented evidence basis — validated at HIGH confidence against authoritative sources.
+    </p>
+    <div class="ev-grid">
+      <div class="ev-card">
+        <div class="ev-tag">Digital Triage Trajectory</div>
+        <div class="ev-citation">Semigran et al. BMJ 2015 → npj Digital Medicine 2025</div>
+        <div class="ev-finding">AI triage accuracy has progressed from 57.7% correct triage (23 rule-based symptom checkers) to 96.4% accuracy with zero hallucinations in RAG-augmented systems. This trajectory directly validates KLARA's architectural choice: RAG-constrained conversational assessment is both the most accurate and the safest available approach for clinical navigation at scale.</div>
+      </div>
+      <div class="ev-card">
+        <div class="ev-tag">Navigation System Impact</div>
+        <div class="ev-citation">Baier et al. Health Policy 2019 · Turner et al. BMJ Open 2013</div>
+        <div class="ev-finding">Cross-national analysis (6 healthcare systems) found structured navigation consistently achieves 15–25% lower non-urgent ED utilization. NHS 111 evidence demonstrates navigation improves routing quality even when total volumes remain stable — shaping KLARA's value framing around routing efficiency and access improvement rather than deflection volume alone.</div>
+      </div>
+      <div class="ev-card">
+        <div class="ev-tag">VRPTW Optimization</div>
+        <div class="ev-citation">Toth & Vigo (2014) · Fikar & Hirsch (2017) · Cherkesly et al. (2019)</div>
+        <div class="ev-finding">Vehicle Routing Problem with Time Windows is well-established in operations research with documented healthcare applications including home health routing and community health worker deployment. Gurobi solves instances of Solution 2's scale (dozens of practitioners, hundreds of delivery points) within seconds. The NS rural physician deployment application is novel but built on proven technique.</div>
+      </div>
+      <div class="ev-card">
+        <div class="ev-tag">LWBS Clinical Harm</div>
+        <div class="ev-citation">McNaughton et al. JACEP Open 2024 · PMC 7972384 (2021)</div>
+        <div class="ev-finding">LWBS patients face 14% higher relative risk of 7-day death or hospitalization (McNaughton 2024). 33.5% return within 30 days; 11.5–23.2% require admission on return (PMC 7972384). Nova Scotia's 52,521 annual LWBS events represent quantifiable clinical harm — not an administrative metric — making LWBS reduction a direct patient safety intervention.</div>
+      </div>
+      <div class="ev-card">
+        <div class="ev-tag">Pharmacy & Virtual Care Pathways</div>
+        <div class="ev-citation">Lapoint & Taylor JAPHA 2021 · Mehrotra et al. Health Affairs 2016</div>
+        <div class="ev-finding">Pharmacy care for minor ailments consistently reduces unnecessary ED visits across jurisdictions — safety comparable to physician care for targeted conditions. NS pharmacists can prescribe for 19+ conditions but most patients are unaware. Telemedicine reduces ED visits in rural areas where primary care is limited (Mehrotra 2016) — supporting KLARA's VirtualCareNS and pharmacy routing pathways.</div>
+      </div>
+      <div class="ev-card">
+        <div class="ev-tag">Non-SaMD Classification</div>
+        <div class="ev-citation">Health Canada SaMD Guidance, December 2019</div>
+        <div class="ev-finding">KLARA maintains non-SaMD classification under Health Canada's four exclusion criteria by using navigation language exclusively — never diagnostic language. RULE-RC-01 is architecturally enforced in the governance layer and cannot be suppressed by operator configuration or user input. Emergency indicators always override the routing system and cannot be disabled.</div>
+      </div>
+    </div>
+
+    <div class="traj">
+      <div class="traj-title">AI Triage Accuracy Trajectory — 2015 to 2025 (validating KLARA's RAG architecture)</div>
+      <div class="traj-row">
+        <div class="traj-yr">2015</div>
+        <div class="traj-track"><div class="traj-fill" style="width:57.7%"></div></div>
+        <div class="traj-pct">57.7%</div>
+        <div class="traj-src">Semigran et al. — 23 rule-based symptom checkers (BMJ)</div>
+      </div>
+      <div class="traj-row">
+        <div class="traj-yr">2022</div>
+        <div class="traj-track"><div class="traj-fill" style="width:71%"></div></div>
+        <div class="traj-pct">71.0%</div>
+        <div class="traj-src">Schmieding et al. — Ada, Babylon, Symptomate evaluations (JMIR)</div>
+      </div>
+      <div class="traj-row">
+        <div class="traj-yr">2023</div>
+        <div class="traj-track"><div class="traj-fill" style="width:90%"></div></div>
+        <div class="traj-pct">&gt;90%</div>
+        <div class="traj-src">Levine et al. — AI chatbot safe triage (npj Digital Medicine)</div>
+      </div>
+      <div class="traj-row">
+        <div class="traj-yr">2025</div>
+        <div class="traj-track"><div class="traj-fill" style="width:96.4%"></div></div>
+        <div class="traj-pct">96.4%</div>
+        <div class="traj-src">npj Digital Medicine — GPT-4 + RAG, zero hallucinations ← KLARA architecture</div>
+      </div>
+    </div>
+  </div>
+</section></div>
+  <div class="flow-cell flow-right"><div class="flow-node" data-section="evidence">Option 1 / 2 · LP / VRPTW</div></div>
+</div>
+<div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 280 0 C 140 20, 140 40, 0 40"/><path d="M 280 0 C 140 20, 140 40, 0 40"/></svg></div>
+
+<!-- ══ LIVE DEMO ══ -->
+<div class="flow-row">
+  <div class="flow-cell flow-left"><div class="flow-node" data-section="demo">M6 Recommendation · M7 Output</div></div>
+  <div class="flow-cell flow-center"><div id="demo">
+  <div class="demo-inner">
+    <div class="section-label">Live System Demonstration — NavigationContext Pipeline</div>
+    <h2 class="section-title">The pipeline<br><em>executing.</em></h2>
+    <p class="section-sub">
+      Select a patient scenario. Observe all seven middleware modules process the case — from symptom intake through risk classification to final recommendation. Scenario 2 triggers Solution 2 access barrier detection and VRPTW activation.
+    </p>
+
+    <div class="demo-layout">
+
+      <!-- Control Panel -->
+      <div class="demo-ctrl">
+        <div class="demo-ctrl-hd">Patient Scenarios</div>
+        <ul class="sc-list">
+          <li class="sc-item active" onclick="selectScenario('sol1_virtual', this)">
+            <div class="sc-name">Sarah, 34 — Halifax, NS</div>
+            <div class="sc-desc">Sore throat, mild fever 2 days. Active salbutamol Rx. No family physician.</div>
+            <span class="sc-badge badge-sol1">Sol. 1 → VirtualCareNS</span>
+          </li>
+          <li class="sc-item" onclick="selectScenario('sol2_rural', this)">
+            <div class="sc-name">Tom, 67 — Shelburne, NS</div>
+            <div class="sc-desc">Urinary symptoms 3 days. No vehicle. Nearest clinic 72km. Local ED closed.</div>
+            <span class="sc-badge badge-sol2">Sol. 2 → Practitioner Deployment</span>
+          </li>
+          <li class="sc-item" onclick="selectScenario('sol1_pharmacy', this)">
+            <div class="sc-name">Maria, 28 — Dartmouth, NS</div>
+            <div class="sc-desc">UTI symptoms 24h. No fever, no systemic symptoms. No PCP attached.</div>
+            <span class="sc-badge badge-sol1">Sol. 1 → Pharmacy (Minor Ailment)</span>
+          </li>
+        </ul>
+        <button class="run-btn" id="runBtn" onclick="runPipeline()">▶ Execute Pipeline</button>
+      </div>
+
+      <!-- Output Area -->
+      <div class="demo-out">
+
+        <!-- Pipeline Progress Bar -->
+        <div class="pp">
+          <div class="pp-hd">
+            <div class="pp-title">Middleware Pipeline — 7 Modules</div>
+            <div class="pp-status" id="ppStatus">READY</div>
+          </div>
+          <div class="pp-stages">
+            <div class="pp-stg" id="s1"><div class="pp-stg-num">M1</div><div class="pp-stg-name">Intake Validation</div></div>
+            <div class="pp-stg" id="s2"><div class="pp-stg-num">M2</div><div class="pp-stg-name">Symptom Parsing</div></div>
+            <div class="pp-stg" id="s3"><div class="pp-stg-num">M3</div><div class="pp-stg-name">Risk Classification</div></div>
+            <div class="pp-stg" id="s4"><div class="pp-stg-num">M4</div><div class="pp-stg-name">Context Enrichment</div></div>
+            <div class="pp-stg" id="s5"><div class="pp-stg-num">M5</div><div class="pp-stg-name">Routing & Access</div></div>
+            <div class="pp-stg" id="s6"><div class="pp-stg-num">M6</div><div class="pp-stg-name">Recommendation</div></div>
+            <div class="pp-stg" id="s7"><div class="pp-stg-num">M7</div><div class="pp-stg-name">FHIR Output</div></div>
+          </div>
+        </div>
+
+        <!-- NavigationContext Live Panel -->
+        <div class="ctx-panel" id="ctxPanel">
+          <div class="ctx-hd" onclick="document.getElementById('ctxPanel').classList.toggle('collapsed')">
+            <div class="ctx-title">NavigationContext — Live Schema</div>
+            <div class="ctx-id" id="ctxId">session_id: —</div>
+          </div>
+          <div class="ctx-body">
+            <div class="ctx-field"><div class="ctx-fkey">auth_status</div><div class="ctx-fval" id="cx-auth">—</div></div>
+            <div class="ctx-field"><div class="ctx-fkey">structured_symptoms[]</div><div class="ctx-fval" id="cx-symp">—</div></div>
+            <div class="ctx-field"><div class="ctx-fkey">risk_classification</div><div class="ctx-fval" id="cx-risk">—</div></div>
+            <div class="ctx-field"><div class="ctx-fkey">dis_medications[]</div><div class="ctx-fval" id="cx-meds">—</div></div>
+            <div class="ctx-field"><div class="ctx-fkey">location.zone</div><div class="ctx-fval" id="cx-zone">—</div></div>
+            <div class="ctx-field"><div class="ctx-fkey">location.driveTime_min</div><div class="ctx-fval" id="cx-drive">—</div></div>
+            <div class="ctx-field"><div class="ctx-fkey">access_barrier_flag</div><div class="ctx-fval" id="cx-barrier">—</div></div>
+            <div class="ctx-field"><div class="ctx-fkey">optimization_result</div><div class="ctx-fval" id="cx-opt">—</div></div>
+          </div>
+        </div>
+
+        <!-- Solution Branch -->
+        <div class="branch" id="branchPanel">
+          <div class="branch-hd" id="branchHd">
+            <span class="branch-badge" id="branchBadge">—</span>
+            <span class="branch-title" id="branchTitle">—</span>
+          </div>
+          <div class="branch-body" id="branchBody"></div>
+        </div>
+
+        <!-- Final Recommendation -->
+        <div class="rec" id="recPanel">
+          <div class="rec-hd">
+            <span class="rec-lbl">Care Recommendation — M6 Output · FHIR R4 Composition</span>
+          </div>
+          <div class="rec-body">
+            <div class="rec-pathway" id="recPathway">—</div>
+            <div class="rec-rationale" id="recRationale">—</div>
+            <div class="rec-meta" id="recMeta"></div>
+            <div class="fhir-block">
+              <div class="fhir-hd">FHIR R4 — Structured Output · CA Core+ v0.3.0</div>
+              <div class="fhir-body" id="fhirOut">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div>
+  <div class="flow-cell flow-right"></div>
+</div>
+<div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 0 0 C 140 20, 140 40, 280 40"/><path d="M 0 0 C 140 20, 140 40, 280 40"/></svg></div>
+
+<!-- ══ DESIGN OBJECTIVES ══ -->
+<div class="flow-row">
+  <div class="flow-cell flow-left"></div>
+  <div class="flow-cell flow-center"><section id="objectives">
+  <div class="obj-inner">
+    <div class="section-label">System Design Objectives</div>
+    <h2 class="section-title">What the architecture<br><em>is built to deliver.</em></h2>
+    <div class="obj-grid">
+      <div class="obj">
+        <div class="obj-stat" style="color:var(--red)">↓ ED</div>
+        <div class="obj-lbl">Reduce unnecessary emergency department presentations — routing CTAS 4–5 patients to appropriate care alternatives before they enter the emergency system</div>
+      </div>
+      <div class="obj">
+        <div class="obj-stat" style="color:var(--cyan)">100%</div>
+        <div class="obj-lbl">Coverage for all Nova Scotians — including 66,768 unattached patients who currently have no reliable mechanism for non-emergency care navigation</div>
+      </div>
+      <div class="obj">
+        <div class="obj-stat" style="color:var(--green)">Real-Time</div>
+        <div class="obj-lbl">Capacity-aware routing prevents routing to closed or saturated facilities — with NSH closure feed integration and temporal demand adjustment</div>
+      </div>
+      <div class="obj">
+        <div class="obj-stat" style="color:var(--amber)">Unified</div>
+        <div class="obj-lbl">Single navigation intelligence layer across all provincial care types — OPOR, VirtualCareNS, Novari, DIS/SHARE, 811, pharmacy, and rural delivery points</div>
+      </div>
+    </div>
+
+    <div style="margin-top:2.5rem;" class="callout">
+      <div class="callout-title">KLARA does not replace physicians.</div>
+      <div class="callout-body">KLARA helps Nova Scotians find the right non-emergency care provider before entering the emergency system unnecessarily. When the appropriate provider cannot be physically reached, KLARA optimizes the delivery of care to the patient — by coordinating practitioner deployment to regulatory-compliant spaces in underserved communities. KLARA makes existing supply go further through two proven optimization models operating on data Nova Scotia already has.</div>
+    </div>
+  </div>
+</section></div>
+  <div class="flow-cell flow-right"><div class="flow-node oval" data-section="objectives">End: Care Summary</div></div>
+</div>
+<div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 280 0 C 140 20, 140 40, 0 40"/><path d="M 280 0 C 140 20, 140 40, 0 40"/></svg></div>
+
+<!-- ══ END SESSION ══ -->
+<div class="end-links">
+  <a href="#" class="end-link top"
+     onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">
+     Back to Top
+  </a>
+  <a href="#evidence" class="end-link">Evidence Brochure</a>
+  <!-- System Pressure: Tableau (opens in new tab) -->
+  <a href="https://public.tableau.com/views/SystemPressureVisuals/Dashboard1?language=en-US&publish=yes&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link"
+     target="_blank" rel="noopener noreferrer" class="end-link">
+     System Pressure Dashboard
+  </a>
+  <!-- Patient Routing / Gurobi: scrolls to in-page dashboards (Tableau embeds below) -->
+  <a href="#evidence-dashboards" class="end-link">Patient Routing Dashboard</a>
+</div>
+  
+<!-- ══ FOOTER ══ -->
+<div class="flow-row" id="page-footer">
+  <div class="flow-cell flow-left"></div>
+  <div class="flow-cell flow-center"><footer>
+  <div class="foot-brand">
+    <strong>KLARA OS</strong> — Healthcare Navigation Intelligence Infrastructure<br>
+    CGI × Saint Mary's University DataJam · March 2026<br>
+    Jurisdiction: Nova Scotia, Canada
+    <div class="safety">
+      ⚠ Navigation system — does not diagnose medical conditions. For emergencies, call 911.
+      All economic projections are modeled, not guaranteed.
+    </div>
+  </div>
+  <div class="foot-meta">
+    Architecture Review v3.0 · Developer Technical Package<br>
+    Harvard Analytical Report · Meta Evidence Brochure (24 sources)<br>
+    PHIA · PIPEDA · PIIDPA · FHIR R4 · CA Core+ v0.3.0<br>
+    KLARA OS v2.4.1 · Two-Phase Solution Architecture
+  </div>
+</footer></div>
+  <div class="flow-cell flow-right"></div>
+</div>
+
+</div><!-- /.page-with-flow -->
+
+<!-- ══ KLARA FRAMEWORK (SUN + MOUNTAINS → PROJECT LINK) ══ -->
+<section class="klara-framework" id="klara-framework" aria-label="KLARA — Navigate to project">
+  <div class="klara-sun-wrap">
+    <div class="klara-sun-rays" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <a href="http://127.0.0.1:8000/" class="klara-sun-link" title="Open KLARA project" aria-label="Open KLARA project"></a>
+  </div>
+  <div class="klara-copy">
+    <div class="klara-cgi">CGI</div>
+    <div class="klara-word">KLARA</div>
+    <div class="klara-tag">Healthcare Navigation · Click the sun to open project</div>
+  </div>
+  <div class="klara-mountains">
+    <div class="klara-mount-layer back">
+      <svg viewBox="0 0 1200 280" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#0f1419" d="M0,280 L0,200 L120,140 L240,180 L360,110 L500,160 L620,95 L760,150 L880,100 L1000,160 L1120,120 L1200,180 L1200,280 Z"/>
+        <path fill="#0f1419" d="M0,280 L80,240 L200,260 L340,220 L480,250 L600,210 L740,245 L860,215 L980,255 L1100,230 L1200,260 L1200,280 Z"/>
+      </svg>
+    </div>
+    <div class="klara-mount-layer mid">
+      <svg viewBox="0 0 1200 280" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#151a22" d="M0,280 L0,220 L100,170 L220,210 L340,150 L460,200 L580,130 L700,180 L820,125 L960,175 L1080,145 L1200,200 L1200,280 Z"/>
+        <path fill="#151a22" d="M0,280 L60,255 L180,275 L300,240 L420,268 L540,235 L660,265 L780,248 L900,270 L1020,252 L1140,272 L1200,258 L1200,280 Z"/>
+      </svg>
+    </div>
+    <div class="klara-mount-layer front">
+      <svg viewBox="0 0 1200 280" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#1a1f28" d="M0,280 L0,255 L140,235 L260,265 L380,245 L500,275 L620,250 L740,270 L860,248 L980,278 L1100,258 L1200,272 L1200,280 Z"/>
+        <path fill="#1e242e" d="M0,280 L100,280 L220,268 L340,280 L460,272 L580,280 L700,268 L820,280 L940,272 L1060,280 L1180,270 L1200,280 L1200,280 Z"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ══ DEMO ENGINE ══ -->
+<script>
+  // ─── SCENARIO DATA ───────────────────────────────────────────────
+  const SCENARIOS = {
+    sol1_virtual: {
+      auth:     "AUTHENTICATED",
+      symptoms: "Pharyngitis (J02.9) · Pyrexia low-grade (R50.9) · Dyspnoea on exertion (R06.09)",
+      risk:     { tier: "AMBER", score: 45, label: "AMBER · 45/100" },
+      meds:     "Salbutamol 100mcg inhaler (DIS active Rx)",
+      zone:     "HRM",
+      drive:    "8 min",
+      barrier:  false,
+      solution: 1,
+      opt:      "Sol.1 LP · pathway_score: 0.87 · strain_j minimized",
+      pathway:  "VirtualCareNS",
+      wait:     "~12 minutes",
+      rationale: "AMBER classification with documented active respiratory comorbidity (salbutamol Rx from DIS) indicates clinician assessment required within 24 hours. Chest tightness combined with existing respiratory condition excludes pharmacy pathway. VirtualCareNS available at 12-minute wait — appropriate for visual and respiratory assessment. Nearest ED current wait: 3.1 hours. Structured FHIR intake travels with patient to receiving clinician.",
+      branchSol: 1,
+      branchLines: [
+        ["optimizer", "PuLP LP — minimizing total system strain across available pathways"],
+        ["pathway_scored", "VirtualCareNS: 0.87 · UTC: 0.52 · Pharmacy: EXCLUDED (AMBER) · ED: 0.31"],
+        ["capacity_check", "VirtualCareNS: 12 min wait · within capacity threshold"],
+        ["fhir_destination", "OPOR SMART on FHIR → receiving clinician pre-populated"]
+      ],
+      fhir: `{
+  "resourceType": "Composition",
+  "status": "final",
+  "type": {
+    "coding": [{ "system": "SNOMED-CT", "code": "371531000",
+    "display": "Progress report" }]
+  },
+  "section": [
+    {
+      "title": "Presenting Complaint",
+      "text": "Pharyngitis + pyrexia + exertional dyspnoea — 48h duration"
+    },
+    {
+      "title": "Risk Classification",
+      "text": "AMBER · 45/100 · active salbutamol Rx · respiratory flag"
+    },
+    {
+      "title": "Recommendation",
+      "text": "VirtualCareNS · estimated 12 min wait · clinician assessment today"
+    }
+  ]
+}`
+    },
+
+    sol2_rural: {
+      auth:     "AUTHENTICATED",
+      symptoms: "Dysuria (R30.0) · Urinary frequency (R35.0) · No fever confirmed",
+      risk:     { tier: "AMBER", score: 38, label: "AMBER · 38/100 · geriatric threshold applied" },
+      meds:     "Metformin 500mg · Ramipril 5mg · Atorvastatin 20mg [comorbidity flag: ≥3 active]",
+      zone:     "RURAL-SW-NS",
+      drive:    "72 min (no vehicle — mobility constraint)",
+      barrier:  true,
+      solution: 2,
+      opt:      "Sol.2 VRPTW · Gurobi · y_pk: NP MacLeod → delivery_07 · W_obj: 0.34",
+      pathway:  "Practitioner Deployment — Shelburne Community Hall",
+      wait:     "Next-day appointment confirmed",
+      rationale: "ACCESS BARRIER DETECTED. Patient is 72km from nearest recommended service, has a documented mobility constraint (no vehicle, cannot drive), and the local rural ED is currently closed per NSH closure feed. access_barrier_flag = TRUE. Solution 1 pathway is correct but physically inaccessible. Solution 2 VRPTW optimizer activated: NP MacLeod deployed to NSH-registered delivery point (Shelburne Community Hall, 2.1km from patient). Solution 1 VirtualCareNS retained as fallback if VRPTW assignment fails.",
+      branchSol: 2,
+      branchLines: [
+        ["barrier_trigger", "Distance (72km) + mobility constraint + rural ED closed"],
+        ["optimizer", "Gurobi VRPTW — minimizing travel + unmet demand + patient burden × vulnerability_weight"],
+        ["practitioner_assigned", "NP MacLeod — Shelburne region, geriatric capability, licensed GP credentials"],
+        ["delivery_point", "Shelburne Community Hall — NSH-registered, 15-pt capacity, 2.1km from patient"],
+        ["sol1_fallback", "VirtualCareNS retained — activated if VRPTW assignment unfeasible"],
+        ["demand_record", "Session flagged → rural demand intelligence logged → feeds next VRPTW cycle"]
+      ],
+      fhir: `{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Composition",
+        "section": [
+          { "title": "Presenting Complaint",
+            "text": "Dysuria + urinary frequency (72h) — geriatric male, comorbidities" },
+          { "title": "Risk Classification",
+            "text": "AMBER 38/100 · geriatric threshold · comorbidity flag: Metformin, Ramipril, Atorvastatin" }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "ServiceRequest",
+        "code": { "text": "NP Assessment — Shelburne Community Site" },
+        "subject": { "reference": "Patient/[hash]" },
+        "requester": { "display": "KLARA OS — Solution 2 VRPTW" }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Location",
+        "name": "Shelburne Community Hall",
+        "status": "active",
+        "type": "NSH-Registered Delivery Point DPT-07"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Appointment",
+        "status": "booked",
+        "start": "2026-03-15T09:00:00"
+      }
+    }
+  ]
+}`
+    },
+
+    sol1_pharmacy: {
+      auth:     "ANONYMOUS",
+      symptoms: "Dysuria (R30.0) · Urinary frequency (R35.0) · Afebrile confirmed",
+      risk:     { tier: "GREEN", score: 18, label: "GREEN · 18/100" },
+      meds:     "None — anonymous session (DIS not queried, no consent path)",
+      zone:     "HRM-DARTMOUTH",
+      drive:    "6 min",
+      barrier:  false,
+      solution: 1,
+      opt:      "Sol.1 LP · pharmacy_minor_ailment eligibility: CONFIRMED · score: 0.91",
+      pathway:  "Pharmacy — Minor Ailment Program",
+      wait:     "Same-day, no appointment required",
+      rationale: "GREEN classification — uncomplicated urinary tract infection presentation without fever, back pain, or systemic symptoms. Nova Scotia pharmacy minor ailment program includes UTI: pharmacists may prescribe first-line antibiotic without physician referral (Lapoint & Taylor 2021). No comorbidity flag present (anonymous session). HRM-Dartmouth: 6-minute drive, multiple pharmacies at capacity. Most clinically appropriate and cost-effective pathway for this presentation confirmed.",
+      branchSol: 1,
+      branchLines: [
+        ["optimizer", "PuLP LP — minimizing system strain across available pathways"],
+        ["minor_ailment_check", "UTI (uncomplicated) — ELIGIBLE for NS Pharmacy prescribing program"],
+        ["pathway_scored", "Pharmacy: 0.91 · VirtualCareNS: 0.74 · Walk-in: 0.68 · ED: 0.22"],
+        ["cost_differential", "Pharmacy ~$30 vs ED ~$355 — $325 avoided system cost per patient"]
+      ],
+      fhir: `{
+  "resourceType": "Composition",
+  "status": "final",
+  "section": [
+    {
+      "title": "Presenting Complaint",
+      "text": "Dysuria + urinary frequency (24h) — no fever, no systemic symptoms"
+    },
+    {
+      "title": "Risk Classification",
+      "text": "GREEN · 18/100 · uncomplicated presentation"
+    },
+    {
+      "title": "Recommendation",
+      "text": "Pharmacy — NS Minor Ailment Program · same-day, no appointment"
+    },
+    {
+      "title": "Clinical Note",
+      "text": "NS pharmacists authorized to prescribe for UTI (uncomplicated). No physician referral required under provincial minor ailment framework."
+    }
+  ]
+}`
+    }
+  };
+
+  let current = 'sol1_virtual';
+  let running = false;
+
+  function applyColdOutput() {
+    const sc = SCENARIOS[current];
+    if (!sc) return;
+    const sid = 'sess-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    document.getElementById('ctxId').textContent = `session_id: ${sid}`;
+    const set = (id, val, cls = '') => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = val;
+      el.className = 'ctx-fval' + (cls ? ' ' + cls : '');
+    };
+    const riskCls = sc.risk.tier === 'GREEN' ? 'gr' : sc.risk.tier === 'RED' ? 'rd' : 'am';
+    set('cx-auth', sc.auth, 'hi');
+    set('cx-symp', sc.symptoms);
+    set('cx-risk', sc.risk.label, riskCls);
+    set('cx-meds', sc.meds);
+    set('cx-zone', sc.zone);
+    set('cx-drive', sc.drive);
+    set('cx-barrier', sc.barrier ? 'true' : 'false', sc.barrier ? 'barrier-true' : '');
+    set('cx-opt', sc.opt);
+  }
+
+  // ─── SCENARIO SELECT ────────────────────────────────────────────
+  function selectScenario(key, evOrEl) {
+    if (running) return;
+    const el = (evOrEl && evOrEl.currentTarget) ? evOrEl.currentTarget : (evOrEl && evOrEl.target) ? evOrEl.target.closest('.sc-item') : evOrEl;
+    if (!el || !el.classList) return;
+    current = key;
+    document.querySelectorAll('.sc-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+    resetDemo();
+  }
+
+  function resetDemo() {
+    for (let i = 1; i <= 7; i++) {
+      document.getElementById(`s${i}`).className = 'pp-stg';
+    }
+    document.getElementById('ppStatus').textContent = 'READY';
+    applyColdOutput();
+    document.getElementById('branchPanel').classList.remove('show');
+    document.getElementById('recPanel').classList.remove('show');
+  }
+
+  // ─── SNAKE FLOWCHART SCROLL-SPY ─────────────────────────────────
+  const SECTION_IDS = ['hero','problem','pipeline','solution','architecture','opor','value','evidence','demo','objectives','end-session'];
+  function updateFlowchartActive() {
+    const viewportMid = window.scrollY + window.innerHeight * 0.4;
+    let activeId = SECTION_IDS[0];
+    for (const id of SECTION_IDS) {
+      const el = document.getElementById(id);
+      if (el && el.offsetTop <= viewportMid) activeId = id;
+    }
+    document.querySelectorAll('.flow-node').forEach(n => {
+      n.classList.toggle('active', n.dataset.section === activeId);
+    });
+  }
+  window.addEventListener('scroll', () => { requestAnimationFrame(updateFlowchartActive); });
+  window.addEventListener('load', updateFlowchartActive);
+
+  // ─── WAVY CONNECTOR PATH ────────────────────────────────────────
+  function updateFlowTrackPath() {
+    const svg = document.getElementById('flowTrackSvg');
+    const pathMain = document.getElementById('flowTrackPathMain');
+    const glowPath = document.querySelector('.flow-track .track-line-glow');
+    const container = document.querySelector('.page-with-flow');
+    const nodes = Array.from(document.querySelectorAll('.flow-node'));
+
+    if (!svg || !pathMain || !glowPath || !container || nodes.length < 2) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const w = containerRect.width;
+    const h = container.scrollHeight;
+
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+
+    const pts = nodes.map(node => {
+      const r = node.getBoundingClientRect();
+      const parent = node.closest('.flow-cell');
+      const isLeft = parent?.classList.contains('flow-left');
+      const isRight = parent?.classList.contains('flow-right');
+
+      const y = (r.top - containerRect.top) + (r.height / 2);
+
+      let x;
+      if (isLeft) {
+        x = (r.right - containerRect.left) - 2;
+      } else if (isRight) {
+        x = (r.left - containerRect.left) + 2;
+      } else {
+        x = (r.left - containerRect.left) + (r.width / 2);
+      }
+
+      return { x, y, side: isLeft ? 'L' : 'R' };
+    });
+
+    let d = `M ${pts[0].x} ${pts[0].y}`;
+
+    for (let i = 1; i < pts.length; i++) {
+      const prev = pts[i - 1];
+      const curr = pts[i];
+      const dy = curr.y - prev.y;
+
+      const bend = Math.min(140, Math.max(70, Math.abs(curr.x - prev.x) * 0.35));
+      const cp1x = prev.side === 'L' ? prev.x + bend : prev.x - bend;
+      const cp2x = curr.side === 'L' ? curr.x + bend : curr.x - bend;
+
+      const cp1y = prev.y + dy * 0.35;
+      const cp2y = prev.y + dy * 0.65;
+
+      d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${curr.x} ${curr.y}`;
+    }
+
+    pathMain.setAttribute('d', d);
+    glowPath.setAttribute('d', d);
+
+    const scrollProgress = window.scrollY * 0.35;
+    pathMain.style.strokeDashoffset = `${-scrollProgress}`;
+    glowPath.style.strokeDashoffset = `${-scrollProgress * 0.7}`;
+  }
+
+  function scheduleFlowTrackUpdate() {
+    requestAnimationFrame(updateFlowTrackPath);
+  }
+
+  window.addEventListener('load', () => {
+    updateFlowTrackPath();
+    setTimeout(updateFlowTrackPath, 120);
+  });
+
+  window.addEventListener('resize', scheduleFlowTrackUpdate, { passive: true });
+  window.addEventListener('scroll', scheduleFlowTrackUpdate, { passive: true });
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  // ─── PIPELINE RUNNER ────────────────────────────────────────────
+  async function runPipeline() {
+    if (running) return;
+    running = true;
+    const btn = document.getElementById('runBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Processing...';
+    document.getElementById('ctxPanel').classList.remove('collapsed');
+    resetDemo();
+
+    const sc = SCENARIOS[current];
+    const sid = 'sess-' + Math.random().toString(36).substr(2,9).toUpperCase();
+    document.getElementById('ctxId').textContent = `session_id: ${sid}`;
+
+    const setField = (id, val, cls = '') => {
+      const el = document.getElementById(id);
+      el.textContent = val;
+      if (cls) el.className = 'ctx-fval ' + cls;
+    };
+
+    const stg = (n, cls) => document.getElementById(`s${n}`).className = `pp-stg ${cls}`;
+    const status = t => document.getElementById('ppStatus').textContent = t;
+
+    // M1
+    status('M1 — INTAKE VALIDATION'); stg(1,'running'); await sleep(620);
+    setField('cx-auth', sc.auth, 'hi'); stg(1,'done');
+
+    // M2
+    await sleep(80); status('M2 — SYMPTOM PARSING'); stg(2,'running'); await sleep(680);
+    setField('cx-symp', sc.symptoms); stg(2,'done');
+
+    // M3
+    await sleep(80); status('M3 — RISK CLASSIFICATION'); stg(3,'running'); await sleep(660);
+    const riskCls = sc.risk.tier === 'GREEN' ? 'gr' : sc.risk.tier === 'RED' ? 'rd' : 'am';
+    setField('cx-risk', sc.risk.label, riskCls); stg(3,'done');
+
+    // M4
+    await sleep(80); status('M4 — CONTEXT ENRICHMENT'); stg(4,'running'); await sleep(580);
+    setField('cx-meds', sc.meds); setField('cx-zone', sc.zone); setField('cx-drive', sc.drive);
+    setField('cx-barrier', sc.barrier ? 'true' : 'false'); stg(4,'done');
+
+    // M5
+    await sleep(80); status('M5 — ROUTING & ACCESS'); stg(5,'running'); await sleep(640);
+    setField('cx-opt', sc.opt); stg(5,'done');
+
+    // M6
+    await sleep(80); status('M6 — RECOMMENDATION'); stg(6,'running'); await sleep(520);
+    document.getElementById('recPathway').textContent = sc.pathway;
+    document.getElementById('recRationale').textContent = sc.rationale;
+    document.getElementById('recMeta').innerHTML = '';
+    const metaArr = [{k:'Wait',v:sc.wait},{k:'Solution',v:'Solution '+sc.solution}];
+    metaArr.forEach(({k,v}) => {
+      const sp = document.createElement('span');
+      sp.className = 'rec-meta-item';
+      sp.innerHTML = `<span>${k}</span>${v}`;
+      document.getElementById('recMeta').appendChild(sp);
+    });
+    document.getElementById('fhirOut').textContent = sc.fhir;
+    document.getElementById('recPanel').classList.add('show');
+    stg(6,'done');
+
+    // M7
+    await sleep(80); status('M7 — FHIR OUTPUT'); stg(7,'running'); await sleep(380);
+    stg(7,'done');
+
+    document.getElementById('branchPanel').classList.add('show');
+    document.getElementById('branchBadge').textContent = sc.branchSol === 1 ? 'Sol. 1' : 'Sol. 2';
+    document.getElementById('branchTitle').textContent = sc.branchSol === 1 ? 'LP Pathway Assignment' : 'VRPTW Practitioner Deployment';
+    const branchBody = document.getElementById('branchBody');
+    branchBody.innerHTML = '';
+    sc.branchLines.forEach(([lbl, txt]) => {
+      const row = document.createElement('div');
+      row.className = 'branch-row';
+      row.innerHTML = `<div class="branch-key">${lbl}</div><div class="branch-val">${txt}</div>`;
+      branchBody.appendChild(row);
+    });
+
+    btn.disabled = false;
+    btn.textContent = '▶ Execute Pipeline';
+    running = false;
+  }
+
+  window.selectScenario = selectScenario;
+  window.runPipeline = runPipeline;
+  applyColdOutput();
+
+  // ─── GUROBI (toggle/scroll defined in inline script after Gurobi section; do not overwrite button) ───
+  if (typeof window.toggleGurobiModel !== 'function') {
+    window.toggleGurobiModel = function() {
+      var panel = document.getElementById('gurobiModel');
+      if (!panel) return;
+      var hidden = (panel.style.display === 'none') || (window.getComputedStyle(panel).display === 'none');
+      panel.style.display = hidden ? 'block' : 'none';
+      if (hidden) panel.style.animation = 'fadeUp 0.4s ease forwards';
+    };
+  }
+  if (typeof window.scrollToGurobiAndOpen !== 'function') {
+    window.scrollToGurobiAndOpen = function() {
+      var el = document.getElementById('gurobi-optimization');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(function() { window.toggleGurobiModel(); }, 400);
+    };
+  }

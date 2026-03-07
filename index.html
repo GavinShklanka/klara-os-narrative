@@ -1252,6 +1252,151 @@
       .ctx-body { grid-template-columns: 1fr; }
       .traj-src { display: none; }
     }
+
+    /* ── KDEMO STYLES (NEW) ── */
+    .kdemo-evidence-wrap { max-width: 1200px; margin: 0 auto; padding: 6rem 2rem; }
+    .kdemo-dash-grid { display: grid; grid-template-columns: 1fr; gap: 3rem; margin-top: 3rem; }
+    .kdemo-dash-card {
+      border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+      background: var(--bg-card);
+    }
+    .kdemo-dash-header { padding: 1.5rem; border-bottom: 1px solid var(--border); }
+    .kdemo-dash-tag {
+      font-size: 0.65rem; font-weight: 800; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--cyan); margin-bottom: 0.5rem;
+    }
+    .kdemo-dash-title { font-size: 1.15rem; font-weight: 800; margin-bottom: 0.4rem; }
+    .kdemo-dash-desc { font-size: 0.78rem; color: var(--text-secondary); }
+    .kdemo-dash-embed { position: relative; min-height: 600px; }
+    .kdemo-dash-caption {
+      padding: 1rem 1.5rem; font-size: 0.78rem; color: var(--text-secondary);
+      background: var(--bg); border-top: 1px solid var(--border);
+    }
+    .kdemo-map-wrap { max-width: 1200px; margin: 0 auto; padding: 6rem 2rem; }
+    .kdemo-map-display { margin-top: 3rem; }
+    .kdemo-map-visual { margin-bottom: 2rem; }
+    .kdemo-stat-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+      border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    }
+    .kdemo-stat-cell {
+      padding: 1.5rem; background: var(--bg-card);
+      border-right: 1px solid var(--border);
+    }
+    .kdemo-stat-cell:last-child { border-right: none; }
+    .kdemo-stat-num {
+      font-size: 1.8rem; font-weight: 900; color: var(--cyan);
+      margin-bottom: 0.5rem; line-height: 1;
+    }
+    .kdemo-stat-lbl { font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .kdemo-stat-note { font-size: 0.7rem; color: var(--text-secondary); }
+    .kdemo-map-bridge { margin-top: 2.5rem; }
+    .kdemo-gurobi-wrap { max-width: 1200px; margin: 0 auto; padding: 6rem 2rem; }
+    .kdemo-gurobi-prelabel {
+      font-size: 0.75rem; color: var(--text-dim); margin-bottom: 1rem;
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .kdemo-gurobi-trigger {
+      display: inline-block; padding: 1rem 2rem; margin-top: 2rem;
+      background: var(--accent); color: white; border: none;
+      border-radius: 6px; font-size: 0.85rem; font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .kdemo-gurobi-trigger:hover {
+      background: var(--accent-light); transform: translateY(-2px);
+    }
+    .kdemo-gurobi-panel {
+      margin-top: 2rem; border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden;
+    }
+    .kdemo-gurobi-header {
+      padding: 1.5rem 2rem; background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+    }
+    .kdemo-gurobi-header h3 { font-size: 1.2rem; font-weight: 800; }
+    .kdemo-gurobi-body { padding: 2rem; background: var(--bg); }
+    .kdemo-flow-explain, .kdemo-rural-explain {
+      display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;
+      padding: 1.5rem; border-radius: 6px; background: var(--bg-card);
+    }
+    .kdemo-rural-explain { background: rgba(245,196,0,0.05); }
+    .kdemo-flow-box {
+      flex: 1; padding: 1rem; border: 1px solid var(--border);
+      border-radius: 4px; background: var(--bg); text-align: center;
+    }
+    .kdemo-flow-box.kdemo-rural { background: rgba(245,196,0,0.03); }
+    .kdemo-flow-title {
+      font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+    .kdemo-flow-desc { font-size: 0.7rem; color: var(--text-secondary); line-height: 1.4; }
+    .kdemo-flow-arrow {
+      font-size: 1.2rem; color: var(--cyan); font-weight: 900;
+      flex-shrink: 0;
+    }
+    .kdemo-plain-lang {
+      margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-card);
+      border-radius: 6px;
+    }
+    .kdemo-plain-lang h4 {
+      font-size: 1rem; font-weight: 700; margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+    .kdemo-plain-lang p {
+      font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;
+    }
+    .kdemo-math-models { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+    .kdemo-model-block {
+      padding: 1.5rem; background: var(--bg-card); border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+    .kdemo-model-block h4 {
+      font-size: 0.9rem; font-weight: 700; margin-bottom: 1rem;
+      color: var(--cyan);
+    }
+    .kdemo-math-content .kdemo-math-item { margin-bottom: 1rem; }
+    .kdemo-math-content .kdemo-math-item strong {
+      color: var(--text-primary); font-size: 0.75rem;
+      display: block; margin-bottom: 0.3rem;
+    }
+    .kdemo-math-content .kdemo-math-item ul {
+      margin-left: 1rem; font-size: 0.7rem; color: var(--text-secondary);
+    }
+    .kdemo-ns-specific {
+      margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-card);
+      border-radius: 6px;
+    }
+    .kdemo-ns-specific h4 {
+      font-size: 1rem; font-weight: 700; margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+    .kdemo-ns-specific p {
+      font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    .kdemo-nova-scotia-matter {
+      padding: 1.5rem; background: rgba(0,212,255,0.03); border-radius: 6px;
+    }
+    .kdemo-nova-scotia-matter h4 {
+      font-size: 1rem; font-weight: 700; margin-bottom: 1.5rem;
+      color: var(--cyan);
+    }
+    .kdemo-ns-points { display: grid; gap: 1rem; }
+    .kdemo-ns-point {
+      padding: 1rem; background: var(--bg-card); border-radius: 4px;
+      border-left: 3px solid var(--cyan);
+    }
+    .kdemo-ns-point strong { color: var(--text-primary); }
+    .kdemo-ns-point { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; }
+    @media (max-width: 1024px) {
+      .kdemo-math-models { grid-template-columns: 1fr; }
+      .kdemo-stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .kdemo-flow-explain, .kdemo-rural-explain { flex-direction: column; }
+      .kdemo-flow-arrow { transform: rotate(90deg); }
+    }
+    @media (max-width: 768px) {
+      .kdemo-stat-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -1389,6 +1534,96 @@
   </div>
 </section></div>
   <div class="flow-cell flow-right"><div class="flow-node" data-section="problem">Patient Input / Initial Triage</div></div>
+</div>
+<div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 280 0 C 140 20, 140 40, 0 40"/><path d="M 280 0 C 140 20, 140 40, 0 40"/></svg></div>
+
+<!-- ══ EVIDENCE DASHBOARDS ══ -->
+<div class="flow-row">
+  <div class="flow-cell flow-left"><div class="flow-node" data-section="evidence-dash">Evidence A · System Pressure</div></div>
+  <div class="flow-cell flow-center"><section id="evidence-dashboards">
+  <div class="kdemo-evidence-wrap">
+    <div class="section-label">Evidence Foundation — Dashboard Analytics</div>
+    <h2 class="section-title">The data reveals<br><em>the problem.</em></h2>
+    <p class="section-sub">
+      These dashboards establish the evidence base for KLARA OS: where system pressure concentrates, how patients flow through care pathways, and what happens when navigation fails. Dashboard A shows the problem. Dashboard B shows the intervention.
+    </p>
+    <div class="kdemo-dash-grid">
+      <div class="kdemo-dash-card">
+        <div class="kdemo-dash-header">
+          <div class="kdemo-dash-tag">Dashboard A · System Pressure</div>
+          <div class="kdemo-dash-title">Patient Care Pathway — Nova Scotia 2023–24</div>
+          <div class="kdemo-dash-desc">Wrong-door demand, LWBS burden, and unattached patient strain</div>
+        </div>
+        <div class="kdemo-dash-embed">
+          <iframe src="simple_routing_dashboard.html" width="100%" height="600" frameborder="0"></iframe>
+        </div>
+        <div class="kdemo-dash-caption">
+          <strong>Key insight:</strong> 181,758 CTAS 4–5 visits annually represent wrong-door demand. 52,521 LWBS patients face documented clinical risk. No system coordinates the care options that already exist.
+        </div>
+      </div>
+      <div class="kdemo-dash-card">
+        <div class="kdemo-dash-header">
+          <div class="kdemo-dash-tag">Dashboard B · KLARA Intervention</div>
+          <div class="kdemo-dash-title">KLARA Routing Dashboard</div>
+          <div class="kdemo-dash-desc">Patient flow logic, urgency distribution, and modeled intervention impact</div>
+        </div>
+        <div class="kdemo-dash-embed">
+          <iframe src="klara_charts_dashboard.html" width="100%" height="600" frameborder="0"></iframe>
+        </div>
+        <div class="kdemo-dash-caption">
+          <strong>Key insight:</strong> Structured navigation intercepting even 50% of wrong-door demand demonstrates substantial system value. This is the routing logic KLARA operationalizes.
+        </div>
+      </div>
+    </div>
+  </div>
+</section></div>
+  <div class="flow-cell flow-right"></div>
+</div>
+<div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 0 0 C 140 20, 140 40, 280 40"/><path d="M 0 0 C 140 20, 140 40, 280 40"/></svg></div>
+
+<!-- ══ NOVA SCOTIA INFRASTRUCTURE ══ -->
+<div class="flow-row">
+  <div class="flow-cell flow-left"></div>
+  <div class="flow-cell flow-center"><section id="nova-scotia-map">
+  <div class="kdemo-map-wrap">
+    <div class="section-label">Infrastructure Geography — Nova Scotia Health Network</div>
+    <h2 class="section-title">The physical network<br><em>KLARA routes across.</em></h2>
+    <p class="section-sub">
+      Nova Scotia Health's hospital and health centre network defines the operating geography for both routing decisions and rural deployment. Four management zones—Western, Northern, Eastern, Central—each with distinct access patterns and closure pressures.
+    </p>
+    <div class="kdemo-map-display">
+      <div class="kdemo-map-visual">
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjUwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMTExMTE4Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSIzMCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjODg4OGEwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4KICAgIE5vdmEgU2NvdGlhIEhlYWx0aCBIb3NwaXRhbHMgJmFtcDsgSGVhbHRoIENlbnRyZXMKICA8L3RleHQ+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNTA1MDVmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4KICAgIFdlc3Rlcm4gfCBOb3J0aGVybiB8IEVhc3Rlcm4gfCBDZW50cmFsIE1hbmFnZW1lbnQgWm9uZXMKICA8L3RleHQ+CiAgPHRleHQgeD0iNTAlIiB5PSI3MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMDBkNGZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4KICAgIFtOb3ZhIFNjb3RpYSBIZWFsdGggTWFwIC0gSGlnaC1SZXMgVmVyc2lvbiBDb21pbmcgU29vbl0KICA8L3RleHQ+Cjwvc3ZnPgo=" alt="Nova Scotia Health Hospitals and Health Centres Network" style="width: 100%; height: auto; border-radius: 8px;" />
+      </div>
+      <div class="kdemo-map-stats">
+        <div class="kdemo-stat-grid">
+          <div class="kdemo-stat-cell">
+            <div class="kdemo-stat-num">51,552</div>
+            <div class="kdemo-stat-lbl">Rural ED closure hours (2023–24)</div>
+            <div class="kdemo-stat-note">55% unplanned · Roseway Hospital: 4,832 hours (201 days)</div>
+          </div>
+          <div class="kdemo-stat-cell">
+            <div class="kdemo-stat-num">4</div>
+            <div class="kdemo-stat-lbl">Management zones</div>
+            <div class="kdemo-stat-note">Western · Northern · Eastern · Central</div>
+          </div>
+          <div class="kdemo-stat-cell">
+            <div class="kdemo-stat-num">60–120+</div>
+            <div class="kdemo-stat-lbl">Minutes drive to alternative care</div>
+            <div class="kdemo-stat-note">When local rural ED closes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="kdemo-map-bridge">
+      <div class="callout">
+        <div class="callout-title">Geography constrains every routing decision</div>
+        <div class="callout-body">This Nova Scotia Health network is the physical substrate KLARA must optimize across. Solution 1 routes patients to available facilities within this network. Solution 2 deploys practitioners to NSH-registered delivery points when the network cannot be reached. Every optimization decision respects these geographic and capacity constraints.</div>
+      </div>
+    </div>
+  </div>
+</section></div>
+  <div class="flow-cell flow-right"><div class="flow-node" data-section="nova-scotia-map">Infrastructure B · NS Geography</div></div>
 </div>
 <div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 280 0 C 140 20, 140 40, 0 40"/><path d="M 280 0 C 140 20, 140 40, 0 40"/></svg></div>
 
@@ -1576,6 +1811,140 @@
   <div class="flow-cell flow-right"><div class="flow-node diamond" data-section="solution">Critical symptoms?</div></div>
 </div>
 <div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 280 0 C 140 20, 140 40, 0 40"/><path d="M 280 0 C 140 20, 140 40, 0 40"/></svg></div>
+
+<!-- ══ GUROBI OPTIMIZATION ENGINE ══ -->
+<div class="flow-row">
+  <div class="flow-cell flow-left"><div class="flow-node" data-section="gurobi-opt">Gurobi Engine · Decision Logic</div></div>
+  <div class="flow-cell flow-center"><section id="gurobi-optimization">
+  <div class="kdemo-gurobi-wrap">
+    <div class="section-label">Technical Appendix</div>
+    <div class="kdemo-gurobi-prelabel">Optimization Model + Rural Routing Logic</div>
+    <h2 class="section-title">The decision engine<br><em>under the workflow.</em></h2>
+    <p class="section-sub">
+      The dashboards show where system pressure concentrates. The Nova Scotia network defines geographic constraints. KLARA structures patient context. Gurobi formalizes the final routing or deployment decision under real-world constraints.
+    </p>
+    <button class="kdemo-gurobi-trigger" onclick="toggleGurobiModel()">
+      View Optimization Model (Gurobi)
+    </button>
+    <div class="kdemo-gurobi-panel" id="gurobiModel" style="display: none;">
+      <div class="kdemo-gurobi-header">
+        <h3>Optimization Engine — Gurobi Routing Model</h3>
+      </div>
+      <div class="kdemo-gurobi-body">
+        <div class="kdemo-flow-explain">
+          <div class="kdemo-flow-box">
+            <div class="kdemo-flow-title">Patient Context</div>
+            <div class="kdemo-flow-desc">Symptoms, risk classification, location, mobility constraints, clinical history from Klara's conversational intake</div>
+          </div>
+          <div class="kdemo-flow-arrow">→</div>
+          <div class="kdemo-flow-box">
+            <div class="kdemo-flow-title">Optimization Engine</div>
+            <div class="kdemo-flow-desc">Gurobi LP/VRPTW solver evaluating all feasible pathways under capacity, safety, and geographic constraints</div>
+          </div>
+          <div class="kdemo-flow-arrow">→</div>
+          <div class="kdemo-flow-box">
+            <div class="kdemo-flow-title">Best Care Pathway</div>
+            <div class="kdemo-flow-desc">Optimal assignment: existing service route (Sol. 1) or practitioner deployment (Sol. 2)</div>
+          </div>
+        </div>
+        <div class="kdemo-rural-explain">
+          <div class="kdemo-flow-box kdemo-rural">
+            <div class="kdemo-flow-title">Rural Underserved Region</div>
+            <div class="kdemo-flow-desc">Patient cannot reach recommended service: &gt;60min drive, mobility constraints, or local ED closed</div>
+          </div>
+          <div class="kdemo-flow-arrow">→</div>
+          <div class="kdemo-flow-box kdemo-rural">
+            <div class="kdemo-flow-title">Routing &amp; Allocation Model</div>
+            <div class="kdemo-flow-desc">VRPTW matches available practitioners to NSH-registered delivery points considering time windows and clinical fit</div>
+          </div>
+          <div class="kdemo-flow-arrow">→</div>
+          <div class="kdemo-flow-box kdemo-rural">
+            <div class="kdemo-flow-title">Improved Rural Access</div>
+            <div class="kdemo-flow-desc">Practitioner deployed to patient's region—care delivered where it's needed</div>
+          </div>
+        </div>
+        <div class="kdemo-plain-lang">
+          <h4>Why optimization is needed</h4>
+          <p>Nova Scotia has 561,139 annual ED visits with 35% potentially redirectable to other pathways. Without optimization, even an AI triage system would make suboptimal assignments—routing patients to facilities at capacity while others remain underutilized, or recommending care that patients cannot physically reach. Gurobi solves these coordination problems mathematically, ensuring each patient gets the best available option given real-time constraints.</p>
+        </div>
+        <div class="kdemo-math-models">
+          <div class="kdemo-model-block">
+            <h4>Solution 1: Linear Programming Model</h4>
+            <div class="kdemo-math-content">
+              <div class="kdemo-math-item">
+                <strong>Decision Variables:</strong> x<sub>ij</sub> ∈ {0,1} where x<sub>ij</sub> = 1 if patient i is assigned to pathway j
+              </div>
+              <div class="kdemo-math-item">
+                <strong>Objective:</strong> Minimize total system strain = Σ[strain<sub>j</sub> × x<sub>ij</sub>] + Σ[mismatch<sub>ij</sub> × x<sub>ij</sub>] + Σ[wait<sub>j</sub> × x<sub>ij</sub>] - Σ[preference<sub>ij</sub> × x<sub>ij</sub>]
+              </div>
+              <div class="kdemo-math-item">
+                <strong>Constraints:</strong>
+                <ul>
+                  <li>One assignment per patient: Σ<sub>j</sub> x<sub>ij</sub> = 1</li>
+                  <li>Capacity limits: Σ<sub>i</sub> x<sub>ij</sub> ≤ C<sub>j</sub></li>
+                  <li>Clinical safety: RED patients → ED/UTC only</li>
+                  <li>Closed facilities excluded from assignment</li>
+                  <li>Rural SLA: ≥1 available pathway per zone</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="kdemo-model-block">
+            <h4>Solution 2: Vehicle Routing Problem with Time Windows (VRPTW)</h4>
+            <div class="kdemo-math-content">
+              <div class="kdemo-math-item">
+                <strong>Decision Variables:</strong>
+                <ul>
+                  <li>y<sub>pk</sub> ∈ {0,1}: practitioner p deployed to delivery point k</li>
+                  <li>z<sub>ik</sub> ∈ {0,1}: patient i assigned to delivery point k</li>
+                  <li>t<sub>pk</sub> ∈ ℝ: arrival time of practitioner p at point k</li>
+                </ul>
+              </div>
+              <div class="kdemo-math-item">
+                <strong>Objective:</strong> Minimize Σ[travel_cost<sub>pk</sub> × y<sub>pk</sub>] + Σ[unmet_demand_penalty<sub>i</sub> × (1 - Σz<sub>ik</sub>)] + Σ[patient_travel<sub>ik</sub> × z<sub>ik</sub> × vulnerability_weight<sub>i</sub>]
+              </div>
+              <div class="kdemo-math-item">
+                <strong>Key Constraints:</strong>
+                <ul>
+                  <li>Practitioner capacity: Σ<sub>k</sub> y<sub>pk</sub> ≤ MaxStops<sub>p</sub></li>
+                  <li>Delivery point capacity: Σ<sub>i</sub> z<sub>ik</sub> ≤ Capacity<sub>k</sub></li>
+                  <li>Time windows: start<sub>k</sub> ≤ t<sub>pk</sub> ≤ end<sub>k</sub></li>
+                  <li>Regulatory compliance: only NSH-registered points eligible</li>
+                  <li>Clinical matching: practitioner credentials must match patient needs</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="kdemo-ns-specific">
+          <h4>How the model supports Solution 1 and Solution 2</h4>
+          <p><strong>Solution 1</strong> uses conversational intake from Klara plus Gurobi optimization to route patients across Nova Scotia's existing pathways: VirtualCareNS, pharmacy (19+ minor ailments), walk-in clinics, urgent treatment centres, and emergency departments. The LP model minimizes wait times and system strain while respecting clinical safety rules.</p>
+          <p><strong>Solution 2</strong> extends the same optimization engine toward physician allocation and rural outreach. When a patient in Shelburne cannot reach the nearest clinic (72km away, ED closed), the VRPTW model deploys an available NP to a registered delivery point near the patient. Both solutions share the middleware pipeline and NavigationContext—they are one intelligence layer, not separate systems.</p>
+        </div>
+        <div class="kdemo-nova-scotia-matter">
+          <h4>Why this matters in Nova Scotia</h4>
+          <div class="kdemo-ns-points">
+            <div class="kdemo-ns-point">
+              <strong>Low-acuity emergency use:</strong> 181,758 CTAS 4–5 visits annually represent optimization opportunities—patients who could be appropriately served elsewhere with better coordination.
+            </div>
+            <div class="kdemo-ns-point">
+              <strong>Rural access constraints:</strong> 51,552 rural ED closure hours mean traditional "go to your nearest hospital" guidance often fails. Optimization must account for real-time facility status.
+            </div>
+            <div class="kdemo-ns-point">
+              <strong>Provider concentration:</strong> Most specialists and services cluster in HRM. Optimization must balance urban efficiency against rural equity in access.
+            </div>
+            <div class="kdemo-ns-point">
+              <strong>Physician routing opportunities:</strong> 66,768 unattached patients represent unmet demand that could be served through optimized practitioner deployment to regulatory-compliant delivery points across the province.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section></div>
+  <div class="flow-cell flow-right"></div>
+</div>
+<div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 0 0 C 140 20, 140 40, 280 40"/><path d="M 0 0 C 140 20, 140 40, 280 40"/></svg></div>
 
 <!-- ══ ARCHITECTURE (4-LAYER) ══ -->
 <div class="flow-row">
@@ -2475,3 +2844,15 @@
   window.selectScenario = selectScenario;
   window.runPipeline = runPipeline;
   applyColdOutput();
+
+  // ─── GUROBI PANEL TOGGLE ───────────────────────────────────────────
+  function toggleGurobiModel() {
+    const panel = document.getElementById('gurobiModel');
+    if (panel.style.display === 'none') {
+      panel.style.display = 'block';
+      panel.style.animation = 'fadeUp 0.4s ease forwards';
+    } else {
+      panel.style.display = 'none';
+    }
+  }
+  window.toggleGurobiModel = toggleGurobiModel;

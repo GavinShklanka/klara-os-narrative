@@ -1016,7 +1016,11 @@
     .end-inner { max-width: 1200px; margin: 0 auto; }
     .end-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 2rem; color: var(--text-primary); }
     .end-links {
-      display: flex; flex-wrap: wrap; gap: 1.25rem;
+      display: flex; flex-direction: row; flex-wrap: wrap;
+      gap: 1.25rem; justify-content: center; align-items: center;
+      width: 100%; max-width: 1200px; margin: 0 auto;
+      grid-column: 1 / -1; /* span full width so links stay horizontal, not in narrow left column */
+      padding: 2rem;
     }
     .end-link {
       display: inline-flex; align-items: center; gap: 0.5rem;
@@ -1068,7 +1072,7 @@
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: radial-gradient(ellipse 80% 50% at 78% 18%, rgba(0,212,255,0.08) 0%, transparent 55%);
+      background: radial-gradient(ellipse 80% 50% at 88% 82%, rgba(0,212,255,0.08) 0%, transparent 55%);
       pointer-events: none;
     }
     .klara-framework::after {
@@ -1082,9 +1086,8 @@
     }
     .klara-sun-wrap {
       position: absolute;
-      top: 14%; right: 12%;
+      bottom: 18%; right: 10%;
       width: 160px; height: 160px;
-      margin: -36px -36px 0 0;
       z-index: 4;
     }
     .klara-sun-link {
@@ -1246,7 +1249,7 @@
       .value-scenarios { grid-template-columns: 1fr; }
       .ev-grid { grid-template-columns: 1fr; }
       .klara-framework { min-height: 300px; }
-      .klara-sun-wrap { right: 8%; top: 12%; }
+      .klara-sun-wrap { bottom: 15%; right: 8%; }
       .klara-copy .klara-word { letter-spacing: 0.12em; }
       .obj-grid { grid-template-columns: repeat(2, 1fr); }
       .ctx-body { grid-template-columns: 1fr; }
@@ -1268,6 +1271,16 @@
     .kdemo-dash-title { font-size: 1.15rem; font-weight: 800; margin-bottom: 0.4rem; }
     .kdemo-dash-desc { font-size: 0.78rem; color: var(--text-secondary); }
     .kdemo-dash-embed { position: relative; min-height: 600px; }
+    .kdemo-gurobi-cta {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 1.25rem 1.5rem; background: rgba(10,10,11,0.95);
+      border: none; border-top: 1px solid var(--cyan);
+      display: flex; flex-direction: column; gap: 0.35rem;
+      cursor: pointer; text-align: left; color: inherit; font: inherit;
+    }
+    .kdemo-gurobi-cta:hover { background: rgba(0,212,255,0.08); }
+    .kdemo-gurobi-cta-label { font-size: 0.85rem; font-weight: 700; color: var(--cyan); }
+    .kdemo-gurobi-cta-sub { font-size: 0.72rem; color: var(--text-secondary); line-height: 1.4; }
     .kdemo-dash-caption {
       padding: 1rem 1.5rem; font-size: 0.78rem; color: var(--text-secondary);
       background: var(--bg); border-top: 1px solid var(--border);
@@ -1545,7 +1558,7 @@
     <div class="section-label">Evidence Foundation — Dashboard Analytics</div>
     <h2 class="section-title">The data reveals<br><em>the problem.</em></h2>
     <p class="section-sub">
-      These dashboards establish the evidence base for KLARA OS: where system pressure concentrates, how patients flow through care pathways, and what happens when navigation fails. Dashboard A shows the problem. Dashboard B shows the intervention.
+      These dashboards establish the evidence base for KLARA OS: where system pressure concentrates, how patients flow through care pathways, and what happens when navigation fails. They show <strong>system value</strong>, <strong>support to existing resources</strong>, and <strong>reduced strain</strong> on the ED—powered by the agentic middleware layer (FastAPI, API, LangChain, Agentic RAG). Dashboard A shows the problem. Dashboard B shows the intervention and the Gurobi optimization logic.
     </p>
     <div class="kdemo-dash-grid">
       <div class="kdemo-dash-card">
@@ -1555,7 +1568,8 @@
           <div class="kdemo-dash-desc">Wrong-door demand, LWBS burden, and unattached patient strain</div>
         </div>
         <div class="kdemo-dash-embed">
-          <iframe src="simple_routing_dashboard.html" width="100%" height="600" frameborder="0"></iframe>
+          <!-- Patient pathways: local file (same folder as this HTML) or Tableau URL -->
+          <iframe src="simple_routing_dashboard%281%29W.html" width="100%" height="600" frameborder="0" allowfullscreen title="Patient Care Pathway — System Pressure"></iframe>
         </div>
         <div class="kdemo-dash-caption">
           <strong>Key insight:</strong> 181,758 CTAS 4–5 visits annually represent wrong-door demand. 52,521 LWBS patients face documented clinical risk. No system coordinates the care options that already exist.
@@ -1563,15 +1577,20 @@
       </div>
       <div class="kdemo-dash-card">
         <div class="kdemo-dash-header">
-          <div class="kdemo-dash-tag">Dashboard B · KLARA Intervention</div>
-          <div class="kdemo-dash-title">KLARA Routing Dashboard</div>
-          <div class="kdemo-dash-desc">Patient flow logic, urgency distribution, and modeled intervention impact</div>
+          <div class="kdemo-dash-tag">Dashboard B · KLARA Intervention (Gurobi solution enhanced)</div>
+          <div class="kdemo-dash-title">KLARA Routing &amp; Gurobi Vehicle Allocation</div>
+          <div class="kdemo-dash-desc">Middleware logic: route to care (Solution 1), route when there is no access pipeline (Solution 2). Only emergency cases → ED; non-emergency redirected to the proper pathway.</div>
         </div>
-        <div class="kdemo-dash-embed">
-          <iframe src="klara_charts_dashboard.html" width="100%" height="600" frameborder="0"></iframe>
+        <div class="kdemo-dash-embed" id="dashboard-b-embed">
+          <!-- KLARA routing: local file (same folder) or paste Tableau embed URL -->
+          <iframe src="klara_charts_dashboardW.html" width="100%" height="600" frameborder="0" allowfullscreen title="KLARA Routing Dashboard"></iframe>
+          <button type="button" class="kdemo-gurobi-cta" onclick="scrollToGurobiAndOpen()" title="View Gurobi vehicle allocation and KLARA routing logic">
+            <span class="kdemo-gurobi-cta-label">View Gurobi vehicle allocation &amp; KLARA routing</span>
+            <span class="kdemo-gurobi-cta-sub">Vehicle allocation tailored to KLARA · Solution 1: route to care · Solution 2: route when no access pipeline · ED only for emergencies</span>
+          </button>
         </div>
         <div class="kdemo-dash-caption">
-          <strong>Key insight:</strong> Structured navigation intercepting even 50% of wrong-door demand demonstrates substantial system value. This is the routing logic KLARA operationalizes.
+          <strong>Key insight:</strong> Klara focuses on intelligently ensuring only emergency cases are routed to the ED. Non-emergency ED demand is redirected to the proper route in Solution 1 (existing pathways); when there is no access pipeline, Solution 2 routes care to the patient (practitioner deployment). System value and support to existing resources—saving strain on the ED.
         </div>
       </div>
     </div>
@@ -1692,7 +1711,7 @@
     <div class="section-label">Two-Phase Solution Architecture</div>
     <h2 class="section-title">Find the right pathway.<br><em>Then deliver it.</em></h2>
     <p class="section-sub">
-      Solution 1 and Solution 2 share the same middleware pipeline, NavigationContext schema, and OPOR integration. They are sequential phases of the same patient journey — not separate systems.
+      Solution 1 and Solution 2 share the same <strong>agentic middleware</strong>—FastAPI, API, LangChain, Agentic RAG—NavigationContext schema, and OPOR integration. They show the benefit of the agentic layer: <strong>system value</strong>, <strong>support to existing resources</strong>, and <strong>reduced strain</strong> on the ED. Only emergency cases are routed to the ED; non-emergency is redirected to the proper pathway (Sol. 1) or, when there is no access pipeline, care is routed to the patient (Sol. 2). They are sequential phases of the same patient journey—not separate systems.
     </p>
     <div class="sol-master-wrap">
       <details open>
@@ -1821,12 +1840,12 @@
     <div class="kdemo-gurobi-prelabel">Optimization Model + Rural Routing Logic</div>
     <h2 class="section-title">The decision engine<br><em>under the workflow.</em></h2>
     <p class="section-sub">
-      The dashboards show where system pressure concentrates. The Nova Scotia network defines geographic constraints. KLARA structures patient context. Gurobi formalizes the final routing or deployment decision under real-world constraints.
+      The dashboards show where system pressure concentrates. The Nova Scotia network defines geographic constraints. KLARA structures patient context through the <strong>agentic middleware layer</strong> (FastAPI, API, LangChain, Agentic RAG). Gurobi formalizes the final routing or deployment decision—<strong>system value</strong>, <strong>support to existing resources</strong>, and <strong>reduced strain</strong> on the ED. Only emergency cases are routed to the ED; non-emergency is redirected to the proper pathway (Solution 1) or, when there is no access pipeline, care is routed to the patient (Solution 2).
     </p>
-    <button class="kdemo-gurobi-trigger" onclick="toggleGurobiModel()">
+    <button type="button" class="kdemo-gurobi-trigger" id="gurobiTriggerBtn" aria-expanded="false" aria-controls="gurobiModel">
       View Optimization Model (Gurobi)
     </button>
-    <div class="kdemo-gurobi-panel" id="gurobiModel" style="display: none;">
+    <div class="kdemo-gurobi-panel" id="gurobiModel" style="display: none;" role="region" aria-labelledby="gurobiTriggerBtn">
       <div class="kdemo-gurobi-header">
         <h3>Optimization Engine — Gurobi Routing Model</h3>
       </div>
@@ -1862,6 +1881,10 @@
             <div class="kdemo-flow-title">Improved Rural Access</div>
             <div class="kdemo-flow-desc">Practitioner deployed to patient's region—care delivered where it's needed</div>
           </div>
+        </div>
+        <div class="kdemo-plain-lang">
+          <h4>Gurobi vehicle allocation tailored to KLARA</h4>
+          <p>The <strong>vehicle allocation problem</strong> (VRPTW) is tailored to KLARA in two ways. <strong>Solution 1</strong>: route patients to the right care pathway—VirtualCareNS, pharmacy, walk-in, UTC, or ED when clinically required. This supports existing resources and saves strain on the ED by redirecting non-emergency ED demand to the proper route. <strong>Solution 2</strong>: when there is <strong>no access pipeline</strong> (e.g. rural, ED closed, &gt;60 min drive, mobility constraint), KLARA does not send the patient to the ED by default; it routes <em>care to the patient</em> via practitioner deployment to NSH-registered delivery points. Klara’s focus: only emergency cases go to the ED; non-emergency is intelligently redirected.</p>
         </div>
         <div class="kdemo-plain-lang">
           <h4>Why optimization is needed</h4>
@@ -1917,9 +1940,9 @@
           </div>
         </div>
         <div class="kdemo-ns-specific">
-          <h4>How the model supports Solution 1 and Solution 2</h4>
-          <p><strong>Solution 1</strong> uses conversational intake from Klara plus Gurobi optimization to route patients across Nova Scotia's existing pathways: VirtualCareNS, pharmacy (19+ minor ailments), walk-in clinics, urgent treatment centres, and emergency departments. The LP model minimizes wait times and system strain while respecting clinical safety rules.</p>
-          <p><strong>Solution 2</strong> extends the same optimization engine toward physician allocation and rural outreach. When a patient in Shelburne cannot reach the nearest clinic (72km away, ED closed), the VRPTW model deploys an available NP to a registered delivery point near the patient. Both solutions share the middleware pipeline and NavigationContext—they are one intelligence layer, not separate systems.</p>
+          <h4>How the model supports Solution 1 and Solution 2 — Agentic middleware</h4>
+          <p><strong>Solution 1</strong> uses the <strong>agentic layer</strong>—conversational intake from Klara (LangChain, Agentic RAG), FastAPI and API—plus Gurobi optimization to route patients across Nova Scotia’s existing pathways: VirtualCareNS, pharmacy (19+ minor ailments), walk-in clinics, urgent treatment centres, and emergency departments. The LP model minimizes wait times and system strain while respecting clinical safety. <strong>Benefit</strong>: system value, support to existing resources, reduced ED strain; only emergency cases are routed to the ED.</p>
+          <p><strong>Solution 2</strong> extends the same optimization engine when there is <strong>no access pipeline</strong>: physician/NP allocation and rural outreach. When a patient cannot reach the nearest clinic (e.g. Shelburne, 72km, ED closed), the VRPTW vehicle-allocation model deploys an available practitioner to an NSH-registered delivery point near the patient. Both solutions share the middleware pipeline, NavigationContext, and agentic intelligence—one layer, not separate systems.</p>
         </div>
         <div class="kdemo-nova-scotia-matter">
           <h4>Why this matters in Nova Scotia</h4>
@@ -1944,6 +1967,26 @@
 </section></div>
   <div class="flow-cell flow-right"></div>
 </div>
+<script>
+(function(){
+  var btn = document.getElementById('gurobiTriggerBtn');
+  var panel = document.getElementById('gurobiModel');
+  if (!btn || !panel) return;
+  function toggle() {
+    var hidden = panel.style.display === 'none';
+    panel.style.display = hidden ? 'block' : 'none';
+    if (hidden) panel.style.animation = 'fadeUp 0.4s ease forwards';
+    btn.setAttribute('aria-expanded', hidden ? 'true' : 'false');
+  }
+  btn.onclick = toggle;
+  window.toggleGurobiModel = toggle;
+  window.scrollToGurobiAndOpen = function() {
+    var el = document.getElementById('gurobi-optimization');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(toggle, 400);
+  };
+})();
+</script>
 <div class="flow-connector"><svg viewBox="0 0 280 40" preserveAspectRatio="none"><path class="glow" d="M 0 0 C 140 20, 140 40, 280 40"/><path d="M 0 0 C 140 20, 140 40, 280 40"/></svg></div>
 
 <!-- ══ ARCHITECTURE (4-LAYER) ══ -->
@@ -2376,30 +2419,18 @@
 
 <!-- ══ END SESSION ══ -->
 <div class="end-links">
-
   <a href="#" class="end-link top"
      onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">
      Back to Top
   </a>
-
-  <a href="#evidence" class="end-link">
-     Evidence Brochure
-  </a>
-
-  <!-- YOUR TABLEAU -->
+  <a href="#evidence" class="end-link">Evidence Brochure</a>
+  <!-- System Pressure: Tableau (opens in new tab) -->
   <a href="https://public.tableau.com/views/SystemPressureVisuals/Dashboard1?language=en-US&publish=yes&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link"
-     target="_blank" rel="noopener noreferrer"
-     class="end-link">
+     target="_blank" rel="noopener noreferrer" class="end-link">
      System Pressure Dashboard
   </a>
-
-  <!-- CLASSMATE TABLEAU -->
-  <a href="simple_routing_dashboard.html"
-     target="_blank" rel="noopener noreferrer"
-     class="end-link">
-     Patient Routing Dashboard
-  </a>
-
+  <!-- Patient Routing / Gurobi: scrolls to in-page dashboards (Tableau embeds below) -->
+  <a href="#evidence-dashboards" class="end-link">Patient Routing Dashboard</a>
 </div>
   
 <!-- ══ FOOTER ══ -->
@@ -2845,14 +2876,20 @@
   window.runPipeline = runPipeline;
   applyColdOutput();
 
-  // ─── GUROBI PANEL TOGGLE ───────────────────────────────────────────
-  function toggleGurobiModel() {
-    const panel = document.getElementById('gurobiModel');
-    if (panel.style.display === 'none') {
-      panel.style.display = 'block';
-      panel.style.animation = 'fadeUp 0.4s ease forwards';
-    } else {
-      panel.style.display = 'none';
-    }
+  // ─── GUROBI (toggle/scroll defined in inline script after Gurobi section; do not overwrite button) ───
+  if (typeof window.toggleGurobiModel !== 'function') {
+    window.toggleGurobiModel = function() {
+      var panel = document.getElementById('gurobiModel');
+      if (!panel) return;
+      var hidden = (panel.style.display === 'none') || (window.getComputedStyle(panel).display === 'none');
+      panel.style.display = hidden ? 'block' : 'none';
+      if (hidden) panel.style.animation = 'fadeUp 0.4s ease forwards';
+    };
   }
-  window.toggleGurobiModel = toggleGurobiModel;
+  if (typeof window.scrollToGurobiAndOpen !== 'function') {
+    window.scrollToGurobiAndOpen = function() {
+      var el = document.getElementById('gurobi-optimization');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(function() { window.toggleGurobiModel(); }, 400);
+    };
+  }
